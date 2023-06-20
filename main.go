@@ -10,7 +10,7 @@ func main() {
 	r := gin.Default()
 	r.GET("/", func(c *gin.Context) {
 		c.JSON(http.StatusOK, gin.H{
-			"message": "VP User Management service",
+			"message": "User Management service",
 		})
 	})
 	r.Run()
