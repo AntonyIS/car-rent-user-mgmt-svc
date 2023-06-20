@@ -44,6 +44,8 @@ License
 This project is licensed under the MIT License.
 
 Support
-For any questions or support, please contact our support team at support@yourcompany.com.
+For any questions or support, please contact me at:
+* https://www.linkedin.com/in/antony-injila-30a53410b
+* antonyshikubu@gmail.com
+* https://medium.com/@antonyshikubu
 
-Feel free to customize and expand upon this README.md file based on your specific user management service's features, installation process, and guidelines for usage.
