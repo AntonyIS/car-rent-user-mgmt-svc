@@ -4,14 +4,18 @@ import (
 	"net/http"
 
 	"github.com/gin-gonic/gin"
+	"github.com/joho/godotenv"
+	"log"
+	"github.com/AntonyIS/car-rent-user-mgmt-svc/config"
 )
+func init(){
+	err := godotenv.Load(".env")
+	if err != nil {
+		log.Fatal("Error loading .env file", err)
+	}
 
+}
 func main() {
-	r := gin.Default()
-	r.GET("/", func(c *gin.Context) {
-		c.JSON(http.StatusOK, gin.H{
-			"message": "User Management service",
-		})
-	})
-	r.Run()
+	appConfig : config.NewConfiguration("dev")
+	repo := repository.NewDynamoDBClient()
 }

@@ -5,6 +5,7 @@ go 1.18
 require (
 	github.com/aws/aws-sdk-go v1.44.293
 	github.com/gin-gonic/gin v1.9.1
+	github.com/joho/godotenv v1.5.1
 )
 
 require (
