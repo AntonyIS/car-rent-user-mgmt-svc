@@ -1,14 +1,13 @@
 package main
 
 import (
-	"net/http"
-
-	"github.com/gin-gonic/gin"
-	"github.com/joho/godotenv"
+	"fmt"
 	"log"
-	"github.com/AntonyIS/car-rent-user-mgmt-svc/config"
+
+	"github.com/joho/godotenv"
 )
-func init(){
+
+func init() {
 	err := godotenv.Load(".env")
 	if err != nil {
 		log.Fatal("Error loading .env file", err)
@@ -16,6 +15,5 @@ func init(){
 
 }
 func main() {
-	appConfig : config.NewConfiguration("dev")
-	repo := repository.NewDynamoDBClient()
+	fmt.Println("Car rent service")
 }
