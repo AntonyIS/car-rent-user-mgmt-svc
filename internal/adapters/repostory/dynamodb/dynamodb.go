@@ -92,7 +92,6 @@ func (db *DynamoDBClient) ReadUser(id string) (*domain.User, error) {
         return nil , errors.New("Could not find user")
     }
 	return &user, nil
-
 }
 
 func (db *DynamoDBClient) ReadUsers() ([]*domain.User, error) {
