@@ -37,7 +37,7 @@ This is part of the Notlify application that manages users and user data.
 
 ## Application structure
 This service uses Hexagonal architecture
-.
+```.
 ├── go.mod
 ├── internal
 │   ├── adapters
@@ -61,6 +61,6 @@ This service uses Hexagonal architecture
 ├── main.go
 ├── Makefile
 └── README.md
-
+```
 
 
