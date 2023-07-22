@@ -1,5 +1,5 @@
 build:
-	go build -o bin/vp-user-mgmt-svc
+	go build -o bin/notlify-user-svc
 
 serve: build
-	./bin/vp-user-mgmt-svc
+	./bin/notlify-user-svc
