@@ -1,51 +1,66 @@
-# User Management Service
-The User Management Service is a powerful system that allows organizations to manage user access and permissions to their applications and resources. This README provides an overview of the service, its features, and instructions for installation and usage.
+# Notlify User Service
+This is part of the Notlify application that manages users and user data.
+* Responsible for user registration, authentication, and authorization.
+* Stores user profile information, handles user preferences, and manages user roles.
+* Provides endpoints for user-related operations like sign up, login, profile updates, etc
 
 ## Features
-* User Authentication: Authenticate users using various methods such as passwords, two-factor authentication, or single sign-on (SSO) protocols.
+1. User authentication and authorization
+    * Implement role-based access control to manage user permissions and privileges.
+    * Define user roles (e.g., regular user, author, moderator) to control access to specific features.
+2. User profile management
+    * Enable users to update their profile information, such as name, bio, profile picture, and contact details.
+    * Allow users to customize their settings and preferences.
+3. Password reset and recovery
+    * Implement a secure process for users to reset their passwords if forgotten.
+    * Send password reset links via email with one-time tokens for verification.
 
-* User Authorization: Manage user access rights and permissions to specific resources or functionalities within the organization's systems or applications.
+## System design components
+1. Cloud services (AWS)
+    * Databases
+        1. PostgreSQL
+        2. S3
+    * Deployment
+        1. Docker (ECR)
+        2. ECS
+        3. EKS
+    * Hosting 
+        1. Route53
 
-* User Lifecycle Management: Provision and deprovision user accounts throughout their lifecycle within the organization, including registration, account creation, suspension, password resets, and account deletion.
+2. Technology stack
+    * Go programming laguages
+    * Go Gin framework
+    * Docker 
+    * Kubernetes
+    * ReactJS + Typescript
+    * AWS 
 
-* Role-Based Access Control (RBAC): Assign roles to users and define permissions based on those roles to control access to resources and actions.
+## Application structure
+This service uses Hexagonal architecture
+```.
+├── go.mod
+├── internal
+│   ├── adapters
+│   │   ├── app
+│   │   │   ├── controllers.go
+│   │   │   ├── controllers_test.go
+│   │   │   └── handler.go
+│   │   └── repository
+│   │       ├── postgres
+│   │       │   └── postgres.go
+│   │       └── s3
+│   │           └── s3.go
+│   └── core
+│       ├── domain
+│       │   └── domain.go
+│       ├── ports
+│       │   └── ports.go
+│       └── services
+│           └── services.go
+├── LICENSE
+├── main.go
+├── Makefile
+└── README.md
+```
 
-* Scalability and Integration: Designed to handle a large number of users and integrates with existing systems and applications within the organization's infrastructure.
-
-* Security and Compliance: Implements security measures to protect user data and ensures compliance with relevant regulations and standards.
-
-* User Self-Service: Enables users to manage their accounts independently, including password resets and profile updates.
-
-* Reporting and Analytics: Provides administrators with insights into user activities, access patterns, and other relevant data for security monitoring and compliance.
-
-* API and Integration Support: Offers APIs and integration capabilities for developers to integrate user management functionalities into their applications and systems.
-
-* Multi-factor Authentication (MFA): Adds an extra layer of security by requiring users to provide multiple forms of verification during login.
-
-Installation
-Clone the repository: git clone https://github.com/AntonyIS/car-rent-user-mgmt-svc
-
-Install dependencies: go mod tidy
-
-
-Start the service: make serve
-
-Usage
-Access the service via the provided URL or API endpoints.
-
-Follow the documentation and API references to integrate the user management functionalities into your applications.
-
-Use the administrative interface to manage user accounts, roles, and permissions.
-
-Contributing
-Contributions are welcome! If you have any suggestions, bug reports, or feature requests, please submit an issue or a pull request.
-
-License
-This project is licensed under the MIT License.
-
-Support
-For any questions or support, please contact me at:
-* https://www.linkedin.com/in/antony-injila-30a53410b
-* antonyshikubu@gmail.com
-* https://medium.com/@antonyshikubu
 
