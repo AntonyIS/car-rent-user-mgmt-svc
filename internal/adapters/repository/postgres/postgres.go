@@ -134,11 +134,7 @@ func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error
 }
 
 func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
-	_, err := psql.ReadUser(id)
-	if err != nil {
-		return "", err
-	}
-	_, err = psql.db.Exec("DELETE FROM users WHERE id = $1", id)
+	_, err := psql.db.Exec("DELETE FROM users WHERE id = $1", id)
 	if err != nil {
 		return "", err
 	}
