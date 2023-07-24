@@ -14,7 +14,7 @@ type PostgresDBClient struct {
 	db *sql.DB
 }
 
-func NewPostgresClient(config *config.Config) *PostgresDBClient {
+func NewPostgresClient(config config.Config) *PostgresDBClient {
 
 	dbEndpoint := fmt.Sprintf("%s:%d", config.DatabaseHost, config.DatabasePort)
 	creds := credentials.NewEnvCredentials()
@@ -46,7 +46,7 @@ func NewPostgresClient(config *config.Config) *PostgresDBClient {
 func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error) {
 	var newUser *domain.User
 	err := psql.db.QueryRow(
-		`INSERT INTO Users (
+		`INSERT INTO %s (
 			id,
 			firstname,
 			lastname,

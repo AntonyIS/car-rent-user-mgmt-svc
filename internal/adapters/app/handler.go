@@ -2,15 +2,13 @@ package app
 
 import (
 	"fmt"
-	"os"
 
-	"github.com/AntonyIS/notlify-user-svc/config"
 	"github.com/AntonyIS/notlify-user-svc/internal/core/ports"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func InitGinRoutes(svc ports.UserService, config config.Config) {
+func InitGinRoutes(svc ports.UserService, port string) {
 	// Enable detailed error responses
 	gin.SetMode(gin.DebugMode)
 
@@ -27,7 +25,6 @@ func InitGinRoutes(svc ports.UserService, config config.Config) {
 
 	// Setup application route handlers
 	handler := NewGinHandler(svc)
-	
 
 	usersRoutes := router.Group("/api/v1/users")
 	{
@@ -38,7 +35,7 @@ func InitGinRoutes(svc ports.UserService, config config.Config) {
 		usersRoutes.DELETE("/:id", handler.DeleteUser)
 	}
 
-	port := fmt.Sprintf(":%s", os.Getenv("SERVER_PORT"))
+	port = fmt.Sprintf(":%s", port)
 
 	router.Run(port)
 }
