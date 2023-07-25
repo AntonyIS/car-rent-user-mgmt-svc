@@ -69,48 +69,15 @@ func NewPostgresClient(config config.Config) *PostgresDBClient {
 }
 
 func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error) {
-	var newUser *domain.User
-	err := psql.db.QueryRow(
-		`INSERT INTO %s (
-			id,
-			firstname,
-			lastname,
-			email,
-			handle,
-			profile_image,
-			following,
-			followers,
-			social_media_links,
-			reading_list,
-			recommendations
-		)
-		VALUES 
-		(
-			$1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-		) RETURNING 
-			id,
-			firstname,
-			lastname,
-			email,
-			handle,
-			profile_image,
-			following,
-			followers,
-			social_media_links,
-			reading_list,
-			recommendations
-		`, user.Id, user.Firstname, user.Lastname, user.Email, user.Handle, user.ProfileImage, user.Following, user.Followers, user.SocialMediaLinks, user.ReadingList, user.Recommendations).
-		Scan(&newUser.Id, &newUser.Firstname, &newUser.Lastname, &newUser.Email, &newUser.Handle, &newUser.ProfileImage, &newUser.Following, &newUser.Followers, &newUser.SocialMediaLinks, &newUser.ReadingList, &newUser.Recommendations)
+	queryString := fmt.Sprintf(
+		`INSERT INTO %s 
+			(id,firstname,lastname,email,password,handle,about,profile_image,following,followers) 
+			VALUES 
+			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10)`,
+		psql.tablename)
 
-	if err != nil {
-		return nil, err
-	}
-	return newUser, nil
-}
+	_, err := psql.db.Exec(queryString, user.Id, user.Firstname, user.Lastname, user.Email, user.Password, user.Handle, user.About, user.ProfileImage, user.Following, user.Followers)
 
-func (psql *PostgresDBClient) ReadUser(id string) (*domain.User, error) {
-	var user *domain.User
-	err := psql.db.QueryRow("SELECT * FROM Users WHERE id=$1", id).Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.ProfileImage, &user.Following, &user.Followers, &user.SocialMediaLinks, &user.ReadingList, &user.Recommendations)
 	if err != nil {
 		return nil, err
 	}
@@ -118,16 +85,29 @@ func (psql *PostgresDBClient) ReadUser(id string) (*domain.User, error) {
 	return user, nil
 }
 
-func (psql *PostgresDBClient) ReadUsers() ([]*domain.User, error) {
+func (psql *PostgresDBClient) ReadUser(id string) (*domain.User, error) {
+	var user domain.User
+	queryString := fmt.Sprintf(`SELECT id,firstname, lastname,email, handle,about,profile_image,following, followers FROM %s WHERE id=$1`, psql.tablename)
+	err := psql.db.QueryRow(queryString, id).Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, &user.ProfileImage, &user.Following, &user.Followers)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
+func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
 	rows, err := psql.db.Query(fmt.Sprintf("SELECT * FROM %s", psql.tablename))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	users := []*domain.User{}
+
+	users := []domain.User{}
 	for rows.Next() {
-		var user *domain.User
-		if err := rows.Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.ProfileImage, &user.Following, &user.Followers, &user.SocialMediaLinks, &user.ReadingList, &user.Recommendations); err != nil {
+		var user domain.User
+
+		if err := rows.Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Password, &user.Handle, &user.About, &user.ProfileImage, &user.Following, &user.Followers); err != nil {
 			return nil, err
 		}
 
@@ -139,19 +119,19 @@ func (psql *PostgresDBClient) ReadUsers() ([]*domain.User, error) {
 }
 
 func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error) {
-	_, err := psql.db.Exec(`
-		UPDATE users SET 
-			firstname = $1,
-			lastname = $2,
-			email = $3,
-			handle = $4,
-			profile_image = $5,
-			following = $6,
-			followers = $7,
-			social_media_links = $8,
-			reading_list = $9,
-			recommendations = $10
-		`, user.Id, user.Firstname, user.Lastname, user.Email, user.Handle, user.ProfileImage, user.Following, user.Followers, user.SocialMediaLinks, user.ReadingList, user.Recommendations)
+	queryString := fmt.Sprintf(`UPDATE %s SET 
+		firstname = $2,
+		lastname = $3,
+		handle = $4,
+		about = $5,
+		profile_image = $6,
+		following = $7,
+		followers = $8
+		WHERE id =$1
+
+	`, psql.tablename)
+
+	_, err := psql.db.Exec(queryString, user.Id, user.Firstname, user.Lastname, user.Handle, user.About, user.ProfileImage, user.Following, user.Followers)
 	if err != nil {
 		return nil, err
 	}
@@ -159,7 +139,9 @@ func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error
 }
 
 func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
-	_, err := psql.db.Exec("DELETE FROM users WHERE id = $1", id)
+	
+	queryString := fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, psql.tablename)
+	_, err := psql.db.Exec(queryString, id)
 	if err != nil {
 		return "", err
 	}
@@ -174,17 +156,13 @@ func migrate(db *sql.DB, userTable string) {
 			firstname VARCHAR(255) NOT NULL,
 			lastname VARCHAR(255) NOT NULL,
 			email VARCHAR(255) UNIQUE NOT NULL,
-			handle VARCHAR(255) UNIQUE NOT NULL,
+			password VARCHAR(255) UNIQUE NOT NULL,
+			handle VARCHAR(255),
 			about TEXT,
 			profile_image varchar(255),
-			Following TEXT[],
-			Followers TEXT[],
-			social_media_links TEXT[],
-			reading_list TEXT[],
-			recommendations TEXT[],
-			blogs TEXT[]
+			Following int,
+			Followers int
 	)
-	
 	`, userTable)
 
 	_, err := db.Exec(queryString)

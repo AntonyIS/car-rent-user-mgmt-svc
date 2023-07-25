@@ -37,6 +37,7 @@ func (h handler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
+	res.About, res.Handle, res.ProfileImage, res.Followers, res.Following = " ", " ", " ", 0, 0
 	user, err := h.svc.CreateUser(res)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -57,7 +58,7 @@ func (h handler) ReadUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, user)
+	ctx.JSON(http.StatusOK, user)
 }
 
 func (h handler) ReadUsers(ctx *gin.Context) {
@@ -68,7 +69,7 @@ func (h handler) ReadUsers(ctx *gin.Context) {
 		})
 		return
 	}
-	ctx.JSON(http.StatusCreated, users)
+	ctx.JSON(http.StatusOK, users)
 }
 
 func (h handler) UpdateUser(ctx *gin.Context) {
@@ -88,7 +89,7 @@ func (h handler) UpdateUser(ctx *gin.Context) {
 		})
 		return
 	}
-
+	res.Id = id
 	user, err := h.svc.UpdateUser(res)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -97,16 +98,20 @@ func (h handler) UpdateUser(ctx *gin.Context) {
 		return
 	}
 
-	ctx.JSON(http.StatusCreated, user)
+	ctx.JSON(http.StatusOK, user)
 }
 
 func (h handler) DeleteUser(ctx *gin.Context) {
 	id := ctx.Param("id")
-	_, err := h.svc.ReadUser(id)
+	message, err := h.svc.DeleteUser(id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": message,
+	})
 }
