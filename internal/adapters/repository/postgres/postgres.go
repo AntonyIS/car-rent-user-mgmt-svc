@@ -8,27 +8,48 @@ import (
 	"github.com/AntonyIS/notlify-user-svc/internal/core/domain"
 	"github.com/aws/aws-sdk-go/aws/credentials"
 	"github.com/aws/aws-sdk-go/service/rds/rdsutils"
+	_ "github.com/lib/pq"
 )
 
 type PostgresDBClient struct {
-	db *sql.DB
+	db        *sql.DB
+	tablename string
 }
 
 func NewPostgresClient(config config.Config) *PostgresDBClient {
+	databaseName := config.DatabaseName
+	databaseUserTable := config.UserTable
+	databaseUser := config.DatabaseUser
+	databasePassword := config.DatabasePassword
+	databasePort := config.DatabasePort
+	databaseHost := config.DatabaseHost
+	databaseRegion := config.AWS_DEFAULT_REGION
+	var dsn string
 
-	dbEndpoint := fmt.Sprintf("%s:%d", config.DatabaseHost, config.DatabasePort)
-	creds := credentials.NewEnvCredentials()
-	authToken, err := rdsutils.BuildAuthToken(dbEndpoint, config.AWS_DEFAULT_REGION, config.DatabaseUser, creds)
+	if config.Env == "dev" {
+		dsn = fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable",
+			databaseHost,
+			databasePort,
+			databaseUser,
+			databaseName,
+			databasePassword,
+		)
+	} else {
+		dbEndpoint := fmt.Sprintf("%s:%s", databaseHost, databasePort)
+		creds := credentials.NewEnvCredentials()
+		authToken, err := rdsutils.BuildAuthToken(dbEndpoint, databaseRegion, databaseUser, creds)
 
-	if err != nil {
-		panic(err)
+		if err != nil {
+			panic(err)
+		}
+
+		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?tls=true&allowCleartextPasswords=true",
+			databaseUser, authToken, dbEndpoint, databaseName,
+		)
 	}
 
-	dsn := fmt.Sprintf("%s:%s@tcp(%s)/%s?tls=true&allowCleartextPasswords=true",
-		config.DatabaseUser, authToken, dbEndpoint, config.DatabaseName,
-	)
-
 	db, err := sql.Open("postgres", dsn)
+
 	if err != nil {
 		panic(err)
 	}
@@ -38,8 +59,12 @@ func NewPostgresClient(config config.Config) *PostgresDBClient {
 		panic(err)
 	}
 
+	// Create users table
+	migrate(db, databaseUserTable)
+
 	return &PostgresDBClient{
-		db: db,
+		db:        db,
+		tablename: databaseUserTable,
 	}
 }
 
@@ -94,12 +119,12 @@ func (psql *PostgresDBClient) ReadUser(id string) (*domain.User, error) {
 }
 
 func (psql *PostgresDBClient) ReadUsers() ([]*domain.User, error) {
-	rows, err := psql.db.Query("SELECT * FROM users")
+	rows, err := psql.db.Query(fmt.Sprintf("SELECT * FROM %s", psql.tablename))
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var users []*domain.User
+	users := []*domain.User{}
 	for rows.Next() {
 		var user *domain.User
 		if err := rows.Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.ProfileImage, &user.Following, &user.Followers, &user.SocialMediaLinks, &user.ReadingList, &user.Recommendations); err != nil {
@@ -139,4 +164,32 @@ func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
 		return "", err
 	}
 	return "Entity deleted successfully", nil
+}
+
+func migrate(db *sql.DB, userTable string) {
+	// Creates new usertable if does not exists
+	queryString := fmt.Sprintf(`
+		CREATE TABLE IF NOT EXISTS %s (
+			id VARCHAR(255) PRIMARY KEY UNIQUE,
+			firstname VARCHAR(255) NOT NULL,
+			lastname VARCHAR(255) NOT NULL,
+			email VARCHAR(255) UNIQUE NOT NULL,
+			handle VARCHAR(255) UNIQUE NOT NULL,
+			about TEXT,
+			profile_image varchar(255),
+			Following TEXT[],
+			Followers TEXT[],
+			social_media_links TEXT[],
+			reading_list TEXT[],
+			recommendations TEXT[],
+			blogs TEXT[]
+	)
+	
+	`, userTable)
+
+	_, err := db.Exec(queryString)
+	if err != nil {
+		panic(err)
+	}
+
 }

@@ -11,13 +11,13 @@ type Config struct {
 	Port               string
 	UserTable          string
 	AWS_ACCESS_KEY     string
-	AWS_SECRET_KEY_ID  string
+	AWS_SECRET_KEY     string
 	AWS_DEFAULT_REGION string
 	DatabaseName       string
 	DatabaseUser       string
 	DatabaseHost       string
-	DatabasePort       int
-	DatabaseRegion     string
+	DatabasePort       string
+	DatabasePassword   string
 	Debugging          bool
 	Testing            bool
 }
@@ -30,32 +30,33 @@ func NewConfig(Env string) (*Config, error) {
 	}
 	var (
 		AWS_ACCESS_KEY     = os.Getenv("AWS_ACCESS_KEY")
-		AWS_SECRET_KEY_ID  = os.Getenv("AWS_SECRET_KEY_ID")
+		AWS_SECRET_KEY     = os.Getenv("AWS_SECRET_KEY")
 		AWS_DEFAULT_REGION = os.Getenv("AWS_DEFAULT_REGION")
 		Port               = "8080"
+		UserTable          = "UsersTable"
+		DatabaseName       = "Notlify"
+		DatabaseUser       = os.Getenv("DatabaseUser")
+		DatabasePort       = "5432"
+		DatabaseHost       = ""
+		DatabasePassword   = os.Getenv("DatabasePassword")
 		Testing            = false
 		Debugging          = false
-		UserTable          = "DevUserTable"
-		DatabaseName       = "Notlify"
-		DatabaseUser       = "Antony"
-		DatabaseHost       = os.Getenv("DatabaseHost")
-		DatabasePort       = 3306
-		DatabaseRegion     = os.Getenv("AWS_DEFAULT_REGION")
 	)
 
 	switch Env {
 	case "testing":
 		Testing = true
 		Debugging = true
-		UserTable = "DevUserTable"
+
 	case "dev":
 		Testing = true
 		Debugging = true
-		UserTable = "DevUserTable"
+		DatabaseHost = "localhost"
+
 	case "prod":
 		Testing = false
 		Debugging = false
-		UserTable = "UserTable"
+		DatabaseHost = os.Getenv("DatabaseHost")
 	}
 
 	config := Config{
@@ -63,7 +64,7 @@ func NewConfig(Env string) (*Config, error) {
 		Port:               Port,
 		UserTable:          UserTable,
 		AWS_ACCESS_KEY:     AWS_ACCESS_KEY,
-		AWS_SECRET_KEY_ID:  AWS_SECRET_KEY_ID,
+		AWS_SECRET_KEY:     AWS_SECRET_KEY,
 		AWS_DEFAULT_REGION: AWS_DEFAULT_REGION,
 		Debugging:          Debugging,
 		Testing:            Testing,
@@ -71,7 +72,7 @@ func NewConfig(Env string) (*Config, error) {
 		DatabaseUser:       DatabaseUser,
 		DatabaseHost:       DatabaseHost,
 		DatabasePort:       DatabasePort,
-		DatabaseRegion:     DatabaseRegion,
+		DatabasePassword:   DatabasePassword,
 	}
 
 	return &config, nil
