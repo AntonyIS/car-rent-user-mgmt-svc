@@ -6,6 +6,7 @@ require (
 	github.com/aws/aws-sdk-go v1.44.306
 	github.com/gin-contrib/cors v1.4.0
 	github.com/gin-gonic/gin v1.9.1
+	github.com/golang-jwt/jwt v3.2.2+incompatible
 	github.com/google/uuid v1.3.0
 	github.com/joho/godotenv v1.5.1
 	github.com/lib/pq v1.10.9

@@ -3,12 +3,13 @@ package app
 import (
 	"fmt"
 
+	"github.com/AntonyIS/notlify-user-svc/config"
 	"github.com/AntonyIS/notlify-user-svc/internal/core/ports"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func InitGinRoutes(svc ports.UserService, port string) {
+func InitGinRoutes(svc ports.UserService, conf config.Config) {
 	// Enable detailed error responses
 	gin.SetMode(gin.DebugMode)
 
@@ -26,7 +27,12 @@ func InitGinRoutes(svc ports.UserService, port string) {
 	// Setup application route handlers
 	handler := NewGinHandler(svc)
 
-	usersRoutes := router.Group("/api/v1/users")
+	usersRoutes := router.Group("/v1/users")
+
+	if conf.Env == "prod" {
+		middleware := NewMiddleware(svc, conf.SECRET_KEY)
+		usersRoutes.Use(middleware.Authorize)
+	}
 	{
 		usersRoutes.GET("/", handler.ReadUsers)
 		usersRoutes.GET("/:id", handler.ReadUser)
@@ -35,7 +41,5 @@ func InitGinRoutes(svc ports.UserService, port string) {
 		usersRoutes.DELETE("/:id", handler.DeleteUser)
 	}
 
-	port = fmt.Sprintf(":%s", port)
-
-	router.Run(port)
+	router.Run(fmt.Sprintf(":%s", conf.Port))
 }

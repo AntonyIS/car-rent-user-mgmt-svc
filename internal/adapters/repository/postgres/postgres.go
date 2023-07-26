@@ -16,7 +16,7 @@ type PostgresDBClient struct {
 	tablename string
 }
 
-func NewPostgresClient(config config.Config) *PostgresDBClient {
+func NewPostgresClient(config config.Config) (*PostgresDBClient, error) {
 	databaseName := config.DatabaseName
 	databaseUserTable := config.UserTable
 	databaseUser := config.DatabaseUser
@@ -40,7 +40,7 @@ func NewPostgresClient(config config.Config) *PostgresDBClient {
 		authToken, err := rdsutils.BuildAuthToken(dbEndpoint, databaseRegion, databaseUser, creds)
 
 		if err != nil {
-			panic(err)
+			return nil, err
 		}
 
 		dsn = fmt.Sprintf("%s:%s@tcp(%s)/%s?tls=true&allowCleartextPasswords=true",
@@ -51,21 +51,18 @@ func NewPostgresClient(config config.Config) *PostgresDBClient {
 	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	err = db.Ping()
 	if err != nil {
-		panic(err)
+		return nil, err
 	}
 
 	// Create users table
 	migrate(db, databaseUserTable)
 
-	return &PostgresDBClient{
-		db:        db,
-		tablename: databaseUserTable,
-	}
+	return &PostgresDBClient{db: db, tablename: databaseUserTable}, nil
 }
 
 func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error) {
@@ -139,7 +136,7 @@ func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error
 }
 
 func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
-	
+
 	queryString := fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, psql.tablename)
 	_, err := psql.db.Exec(queryString, id)
 	if err != nil {
@@ -148,7 +145,7 @@ func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
 	return "Entity deleted successfully", nil
 }
 
-func migrate(db *sql.DB, userTable string) {
+func migrate(db *sql.DB, userTable string) error {
 	// Creates new usertable if does not exists
 	queryString := fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
@@ -167,7 +164,9 @@ func migrate(db *sql.DB, userTable string) {
 
 	_, err := db.Exec(queryString)
 	if err != nil {
-		panic(err)
+		return err
 	}
+
+	return nil
 
 }
