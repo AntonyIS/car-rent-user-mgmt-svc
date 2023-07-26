@@ -22,3 +22,4 @@ func (u User) CheckPasswordHarsh(password string) bool {
 	}
 	return true
 }
+

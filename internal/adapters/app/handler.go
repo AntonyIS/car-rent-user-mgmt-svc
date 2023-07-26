@@ -4,16 +4,13 @@ import (
 	"fmt"
 
 	"github.com/AntonyIS/notlify-user-svc/config"
+	"github.com/AntonyIS/notlify-user-svc/internal/adapters/logger"
 	"github.com/AntonyIS/notlify-user-svc/internal/core/ports"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func InitGinRoutes(svc ports.UserService, conf config.Config) {
-	// Enable detailed error responses
-	gin.SetMode(gin.DebugMode)
-
-	// Setup Gin router
+func InitGinRoutes(svc ports.UserService, logger logger.LoggerType, conf config.Config) {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
@@ -24,7 +21,6 @@ func InitGinRoutes(svc ports.UserService, conf config.Config) {
 		AllowCredentials: true,
 	}))
 
-	// Setup application route handlers
 	handler := NewGinHandler(svc, conf.SECRET_KEY)
 
 	usersRoutes := router.Group("/v1/users")
@@ -42,6 +38,6 @@ func InitGinRoutes(svc ports.UserService, conf config.Config) {
 		usersRoutes.POST("/login", handler.Login)
 		usersRoutes.POST("/logout", handler.Logout)
 	}
-
+	logger.PostLogMessage(fmt.Sprintf("Server running on port :%s", conf.Port))
 	router.Run(fmt.Sprintf(":%s", conf.Port))
 }

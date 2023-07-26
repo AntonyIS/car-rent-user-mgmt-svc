@@ -18,6 +18,8 @@ type GinHandler interface {
 	Logout(ctx *gin.Context)
 }
 
+
+
 type handler struct {
 	svc       ports.UserService
 	secretKey string

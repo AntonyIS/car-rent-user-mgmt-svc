@@ -13,6 +13,7 @@ type Config struct {
 	AWS_ACCESS_KEY     string
 	AWS_SECRET_KEY     string
 	AWS_DEFAULT_REGION string
+	LoggerURL          string
 	SECRET_KEY         string
 	DatabaseName       string
 	DatabaseUser       string
@@ -33,6 +34,7 @@ func NewConfig(Env string) (*Config, error) {
 		AWS_ACCESS_KEY     = os.Getenv("AWS_ACCESS_KEY")
 		AWS_SECRET_KEY     = os.Getenv("AWS_SECRET_KEY")
 		AWS_DEFAULT_REGION = os.Getenv("AWS_DEFAULT_REGION")
+		LoggerURL          = os.Getenv("LoggerURL")
 		SECRET_KEY         = os.Getenv("SECRET_KEY")
 		Port               = "8080"
 		UserTable          = "UsersTable"
@@ -69,6 +71,7 @@ func NewConfig(Env string) (*Config, error) {
 		AWS_SECRET_KEY:     AWS_SECRET_KEY,
 		SECRET_KEY:         SECRET_KEY,
 		AWS_DEFAULT_REGION: AWS_DEFAULT_REGION,
+		LoggerURL:          LoggerURL,
 		Debugging:          Debugging,
 		Testing:            Testing,
 		DatabaseName:       DatabaseName,
