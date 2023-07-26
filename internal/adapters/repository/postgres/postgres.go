@@ -93,6 +93,17 @@ func (psql *PostgresDBClient) ReadUser(id string) (*domain.User, error) {
 	return &user, nil
 }
 
+func (psql *PostgresDBClient) ReadUserWithEmail(email string) (*domain.User, error) {
+	var user domain.User
+	queryString := fmt.Sprintf(`SELECT id,firstname, lastname,email, handle,about,profile_image,following, followers FROM %s WHERE email=$1`, psql.tablename)
+	err := psql.db.QueryRow(queryString, email).Scan(&user.Id, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, &user.ProfileImage, &user.Following, &user.Followers)
+	if err != nil {
+		return nil, err
+	}
+
+	return &user, nil
+}
+
 func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
 	rows, err := psql.db.Query(fmt.Sprintf("SELECT * FROM %s", psql.tablename))
 	if err != nil {

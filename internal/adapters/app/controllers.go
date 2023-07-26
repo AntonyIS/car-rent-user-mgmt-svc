@@ -14,15 +14,19 @@ type GinHandler interface {
 	ReadUsers(ctx *gin.Context)
 	UpdateUser(ctx *gin.Context)
 	DeleteUser(ctx *gin.Context)
+	Login(ctx *gin.Context)
+	Logout(ctx *gin.Context)
 }
 
 type handler struct {
-	svc ports.UserService
+	svc       ports.UserService
+	secretKey string
 }
 
-func NewGinHandler(svc ports.UserService) GinHandler {
+func NewGinHandler(svc ports.UserService, secretKey string) GinHandler {
 	routerHandler := handler{
-		svc: svc,
+		svc:       svc,
+		secretKey: secretKey,
 	}
 
 	return routerHandler
@@ -114,4 +118,64 @@ func (h handler) DeleteUser(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": message,
 	})
+}
+
+func (h handler) Login(ctx *gin.Context) {
+	var user domain.User
+	if err := ctx.ShouldBind(&user); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{
+			"error": err,
+		})
+		return
+	}
+	dbUser, err := h.svc.ReadUserWithEmail(user.Email)
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	if dbUser.CheckPasswordHarsh(user.Password) {
+		middleware := NewMiddleware(h.svc, h.secretKey)
+		tokenString, err := middleware.GenerateToken(dbUser.Id)
+
+		if err != nil {
+			ctx.JSON(http.StatusNotFound, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		ctx.SetSameSite(http.SameSiteLaxMode)
+		ctx.SetCookie("token", tokenString, 3600*24*30, "", "", false, true)
+
+		ctx.JSON(http.StatusOK, gin.H{
+			"accessToken": tokenString,
+		})
+
+		return
+
+	} else {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error": "Invalid email or password",
+		})
+		return
+	}
+}
+
+func (h handler) Logout(ctx *gin.Context) {
+	tokenString := ctx.GetHeader("tokenString")
+
+	if tokenString == "" {
+		ctx.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
+			"error": "Authorization header is missing",
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": "Token invalidated successfuly",
+	})
+
 }

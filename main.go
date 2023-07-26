@@ -22,12 +22,12 @@ func main() {
 		panic(err)
 	}
 	// // Postgres Client
-	postgresDBrepo, err := postgres.NewPostgresClient(*conf)
+	postgresDBRepo, err := postgres.NewPostgresClient(*conf)
 	if err != nil {
 		panic(err)
 	} else {
 		// // User service
-		userSVC := services.NewUserManagementService(postgresDBrepo)
+		userSVC := services.NewUserManagementService(postgresDBRepo)
 		// // Initialize HTTP server
 		app.InitGinRoutes(userSVC, *conf)
 	}

@@ -25,7 +25,7 @@ func InitGinRoutes(svc ports.UserService, conf config.Config) {
 	}))
 
 	// Setup application route handlers
-	handler := NewGinHandler(svc)
+	handler := NewGinHandler(svc, conf.SECRET_KEY)
 
 	usersRoutes := router.Group("/v1/users")
 
