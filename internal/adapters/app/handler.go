@@ -36,9 +36,11 @@ func InitGinRoutes(svc ports.UserService, conf config.Config) {
 	{
 		usersRoutes.GET("/", handler.ReadUsers)
 		usersRoutes.GET("/:id", handler.ReadUser)
-		usersRoutes.POST("/", handler.CreateUser)
 		usersRoutes.PUT("/:id", handler.UpdateUser)
 		usersRoutes.DELETE("/:id", handler.DeleteUser)
+		usersRoutes.POST("/signup", handler.CreateUser)
+		usersRoutes.POST("/login", handler.Login)
+		usersRoutes.POST("/logout", handler.Logout)
 	}
 
 	router.Run(fmt.Sprintf(":%s", conf.Port))
