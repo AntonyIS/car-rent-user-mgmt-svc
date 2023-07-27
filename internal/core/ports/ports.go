@@ -19,5 +19,3 @@ type UserRepository interface {
 	UpdateUser(user *domain.User) (*domain.User, error)
 	DeleteUser(id string) (string, error)
 }
-
-

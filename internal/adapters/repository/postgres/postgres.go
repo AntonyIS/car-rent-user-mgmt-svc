@@ -2,7 +2,10 @@ package postgres
 
 import (
 	"database/sql"
+	"encoding/json"
 	"fmt"
+	"io/ioutil"
+	"net/http"
 
 	"github.com/AntonyIS/notlify-user-svc/config"
 	"github.com/AntonyIS/notlify-user-svc/internal/adapters/logger"
@@ -93,7 +96,13 @@ func (psql *PostgresDBClient) ReadUser(id string) (*domain.User, error) {
 		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
 	}
+	contents, err := psql.readUserContent(id)
 
+	if err != nil {
+		psql.loggerService.PostLogMessage(err.Error())
+		return nil, err
+	}
+	user.Contents = contents
 	return &user, nil
 }
 
@@ -127,7 +136,6 @@ func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
 		users = append(users, user)
 
 	}
-
 	return users, nil
 }
 
@@ -161,6 +169,36 @@ func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
 		return "", err
 	}
 	return "Entity deleted successfully", nil
+}
+func (psql *PostgresDBClient) readUserContent(userId string) ([]domain.Content, error) {
+	// URL of the API or website you want to request data from
+	url := "http://127.0.0.1:5000"
+
+	// Send GET request
+	response, err := http.Get(url)
+	if err != nil {
+		fmt.Println(url)
+		psql.loggerService.PostLogMessage(err.Error())
+		return nil, err
+	}
+	defer response.Body.Close()
+
+	// Read the response body
+	body, err := ioutil.ReadAll(response.Body)
+	if err != nil {
+
+		psql.loggerService.PostLogMessage(err.Error())
+		return nil, err
+	}
+
+	// Convert the response body to a string and print it
+	var content []domain.Content
+	err = json.Unmarshal(body, &content)
+	if err != nil {
+		psql.loggerService.PostLogMessage(err.Error())
+		return nil, err
+	}
+	return content, nil
 }
 
 func migrate(db *sql.DB, userTable string) error {
