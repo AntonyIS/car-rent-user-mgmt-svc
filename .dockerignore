@@ -25,3 +25,5 @@ RELEASE.md
 bin
 
 .env
+/bin
+/sysLogs
