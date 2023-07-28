@@ -24,6 +24,8 @@ go.work
 RELEASE.md
 bin
 
-.env
+go.mod
+go.sum
+
 /bin
 /sysLogs

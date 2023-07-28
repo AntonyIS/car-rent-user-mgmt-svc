@@ -172,12 +172,12 @@ func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
 }
 func (psql *PostgresDBClient) readUserContent(userId string) ([]domain.Content, error) {
 	// URL of the API or website you want to request data from
-	url := "http://127.0.0.1:5000"
+	url := fmt.Sprintf("http://127.0.0.1:8080/v1/contents/author/%s", userId)
 
 	// Send GET request
 	response, err := http.Get(url)
+
 	if err != nil {
-		fmt.Println(url)
 		psql.loggerService.PostLogMessage(err.Error())
 		return nil, err
 	}

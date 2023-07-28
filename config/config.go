@@ -36,7 +36,7 @@ func NewConfig(Env string) (*Config, error) {
 		AWS_DEFAULT_REGION = os.Getenv("AWS_DEFAULT_REGION")
 		LoggerURL          = os.Getenv("LoggerURL")
 		SECRET_KEY         = os.Getenv("SECRET_KEY")
-		Port               = "8080"
+		Port               = "8081"
 		UserTable          = "UsersTable"
 		DatabaseName       = "Notlify"
 		DatabaseUser       = os.Getenv("DatabaseUser")

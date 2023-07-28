@@ -21,13 +21,13 @@ type User struct {
 }
 
 type Content struct {
-	ContentId       string            `json:"content_id"`
-	CreatorId       string            `json:"creator_id"`
-	Title           string            `json:"title"`
-	Body            string            `json:"body"`
-	Images          map[string]string `json:"images"`
-	Videos          map[string]string `json:"videos"`
-	PublicationDate time.Time         `json:"publication_date"`
+	ContentId string `json:"content_id"`
+	CreatorId string `json:"creator_id"`
+	Title     string `json:"title"`
+	Body      string `json:"body"`
+	// Images          map[string]string `json:"images"`
+	// Videos          map[string]string `json:"videos"`
+	PublicationDate time.Time `json:"publication_date"`
 }
 
 func (u User) CheckPasswordHarsh(password string) bool {
