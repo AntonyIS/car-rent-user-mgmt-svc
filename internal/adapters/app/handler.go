@@ -25,16 +25,17 @@ func InitGinRoutes(svc ports.UserService, logger logger.LoggerType, conf config.
 
 	usersRoutes := router.Group("/v1/users")
 
-	if conf.Env == "prod" {
-		middleware := NewMiddleware(svc, conf.SECRET_KEY)
-		usersRoutes.Use(middleware.Authorize)
-	}
+	// if conf.Env == "prod" {
+	// 	middleware := NewMiddleware(svc, conf.SECRET_KEY)
+	// 	usersRoutes.Use(middleware.Authorize)
+	// }
+
 	{
 		usersRoutes.GET("/", handler.ReadUsers)
 		usersRoutes.GET("/:id", handler.ReadUser)
 		usersRoutes.PUT("/:id", handler.UpdateUser)
 		usersRoutes.DELETE("/:id", handler.DeleteUser)
-		usersRoutes.POST("/signup", handler.CreateUser)
+		usersRoutes.POST("/", handler.CreateUser)
 		usersRoutes.POST("/login", handler.Login)
 		usersRoutes.POST("/logout", handler.Logout)
 	}

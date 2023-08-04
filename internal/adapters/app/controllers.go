@@ -18,8 +18,6 @@ type GinHandler interface {
 	Logout(ctx *gin.Context)
 }
 
-
-
 type handler struct {
 	svc       ports.UserService
 	secretKey string
@@ -35,7 +33,14 @@ func NewGinHandler(svc ports.UserService, secretKey string) GinHandler {
 }
 
 func (h handler) CreateUser(ctx *gin.Context) {
-	var res *domain.User
+	res := domain.User{
+		About:        "",
+		Handle:       "",
+		ProfileImage: "",
+		Following:    0,
+		Followers:    0,
+		Contents:     []domain.Content{},
+	}
 	if err := ctx.ShouldBindJSON(&res); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
 			"error": err.Error(),
@@ -43,8 +48,7 @@ func (h handler) CreateUser(ctx *gin.Context) {
 		return
 	}
 
-	res.About, res.Handle, res.ProfileImage, res.Followers, res.Following = " ", " ", " ", 0, 0
-	user, err := h.svc.CreateUser(res)
+	user, err := h.svc.CreateUser(&res)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),

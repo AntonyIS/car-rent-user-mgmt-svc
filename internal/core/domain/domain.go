@@ -21,12 +21,10 @@ type User struct {
 }
 
 type Content struct {
-	ContentId string `json:"content_id"`
-	CreatorId string `json:"creator_id"`
-	Title     string `json:"title"`
-	Body      string `json:"body"`
-	// Images          map[string]string `json:"images"`
-	// Videos          map[string]string `json:"videos"`
+	ContentId       string    `json:"content_id"`
+	CreatorId       string    `json:"creator_id"`
+	Title           string    `json:"title"`
+	Body            string    `json:"body"`
 	PublicationDate time.Time `json:"publication_date"`
 }
 

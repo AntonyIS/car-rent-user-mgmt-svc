@@ -2,8 +2,12 @@ package logger
 
 import (
 	"bytes"
+	"fmt"
 	"io/ioutil"
+	"log"
 	"net/http"
+	"os"
+	"time"
 )
 
 type LoggerService interface {
@@ -15,16 +19,16 @@ type LoggerType struct {
 }
 
 func (l LoggerType) PostLogMessage(message string) error {
-	// currentTime := time.Now()
-	// filename := fmt.Sprintf("%s.log", currentTime.Format("2006-01-02"))
-	// filepath := fmt.Sprintf("sysLogs/%s", filename)
-	// file, err := os.Create(filepath)
-	// if err != nil {
-	// 	panic(err)
-	// }
-	// defer file.Close()
+	currentTime := time.Now()
+	filename := fmt.Sprintf("%s.log", currentTime.Format("2006-01-02"))
+	filepath := fmt.Sprintf("sysLogs/%s", filename)
+	file, err := os.Create(filepath)
+	if err != nil {
+		panic(err)
+	}
+	defer file.Close()
 
-	// log.SetOutput(file)
+	log.SetOutput(file)
 
 	// Create a new HTTP client
 	client := &http.Client{}

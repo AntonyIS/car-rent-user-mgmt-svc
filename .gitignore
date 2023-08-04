@@ -19,5 +19,6 @@ go.work
 
 RELEASE.md
 bin
+/sysLogs
 
 .env
