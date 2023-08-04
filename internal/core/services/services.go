@@ -37,6 +37,10 @@ func (svc *UserManagementService) ReadUser(id string) (*domain.User, error) {
 	return svc.repo.ReadUser(id)
 }
 
+func (svc *UserManagementService) ReadUserWithEmail(email string) (*domain.User, error) {
+	return svc.repo.ReadUser(email)
+}
+
 func (svc *UserManagementService) ReadUsers() ([]domain.User, error) {
 	return svc.repo.ReadUsers()
 }

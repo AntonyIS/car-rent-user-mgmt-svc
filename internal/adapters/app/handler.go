@@ -3,16 +3,14 @@ package app
 import (
 	"fmt"
 
+	"github.com/AntonyIS/notlify-user-svc/config"
+	"github.com/AntonyIS/notlify-user-svc/internal/adapters/logger"
 	"github.com/AntonyIS/notlify-user-svc/internal/core/ports"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func InitGinRoutes(svc ports.UserService, port string) {
-	// Enable detailed error responses
-	gin.SetMode(gin.DebugMode)
-
-	// Setup Gin router
+func InitGinRoutes(svc ports.UserService, logger logger.LoggerType, conf config.Config) {
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
@@ -23,19 +21,24 @@ func InitGinRoutes(svc ports.UserService, port string) {
 		AllowCredentials: true,
 	}))
 
-	// Setup application route handlers
-	handler := NewGinHandler(svc)
+	handler := NewGinHandler(svc, conf.SECRET_KEY)
 
-	usersRoutes := router.Group("/api/v1/users")
+	usersRoutes := router.Group("/v1/users")
+
+	// if conf.Env == "prod" {
+	// 	middleware := NewMiddleware(svc, conf.SECRET_KEY)
+	// 	usersRoutes.Use(middleware.Authorize)
+	// }
+
 	{
 		usersRoutes.GET("/", handler.ReadUsers)
 		usersRoutes.GET("/:id", handler.ReadUser)
-		usersRoutes.POST("/", handler.CreateUser)
 		usersRoutes.PUT("/:id", handler.UpdateUser)
 		usersRoutes.DELETE("/:id", handler.DeleteUser)
+		usersRoutes.POST("/", handler.CreateUser)
+		usersRoutes.POST("/login", handler.Login)
+		usersRoutes.POST("/logout", handler.Logout)
 	}
-
-	port = fmt.Sprintf(":%s", port)
-
-	router.Run(port)
+	logger.PostLogMessage(fmt.Sprintf("Server running on port :%s", conf.Port))
+	router.Run(fmt.Sprintf(":%s", conf.Port))
 }
