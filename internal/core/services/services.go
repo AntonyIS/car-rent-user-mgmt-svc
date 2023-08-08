@@ -58,3 +58,7 @@ func (svc *UserManagementService) DeleteUser(id string) (string, error) {
 
 	return svc.repo.DeleteUser(id)
 }
+
+func (svc *UserManagementService) DeleteAllUsers() (string, error) {
+	return svc.repo.DeleteAllUsers()
+}

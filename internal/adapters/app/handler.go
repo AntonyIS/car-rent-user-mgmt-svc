@@ -12,29 +12,20 @@ import (
 
 func InitGinRoutes(svc ports.UserService, logger logger.LoggerType, conf config.Config) {
 	router := gin.Default()
-
-	router.Use(cors.New(cors.Config{
-		AllowOrigins:     []string{"http://localhost:3000"},
-		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-		AllowHeaders:     []string{"Origin", "Content-Type"},
-		ExposeHeaders:    []string{"Content-Length"},
-		AllowCredentials: true,
-	}))
+	config := cors.DefaultConfig()
+	config.AllowAllOrigins = true
+	router.Use(cors.New(config))
 
 	handler := NewGinHandler(svc, conf.SECRET_KEY)
 
 	usersRoutes := router.Group("/v1/users")
-
-	// if conf.Env == "prod" {
-	// 	middleware := NewMiddleware(svc, conf.SECRET_KEY)
-	// 	usersRoutes.Use(middleware.Authorize)
-	// }
 
 	{
 		usersRoutes.GET("/", handler.ReadUsers)
 		usersRoutes.GET("/:id", handler.ReadUser)
 		usersRoutes.PUT("/:id", handler.UpdateUser)
 		usersRoutes.DELETE("/:id", handler.DeleteUser)
+		usersRoutes.DELETE("/delete/all", handler.DeleteAllUsers)
 		usersRoutes.POST("/", handler.CreateUser)
 		usersRoutes.POST("/login", handler.Login)
 		usersRoutes.POST("/logout", handler.Logout)

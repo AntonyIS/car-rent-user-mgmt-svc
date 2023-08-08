@@ -9,6 +9,7 @@ type UserService interface {
 	ReadUsers() ([]domain.User, error)
 	UpdateUser(user *domain.User) (*domain.User, error)
 	DeleteUser(id string) (string, error)
+	DeleteAllUsers() (string, error)
 }
 
 type UserRepository interface {
@@ -18,4 +19,5 @@ type UserRepository interface {
 	ReadUsers() ([]domain.User, error)
 	UpdateUser(user *domain.User) (*domain.User, error)
 	DeleteUser(id string) (string, error)
+	DeleteAllUsers() (string, error)
 }
