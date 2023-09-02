@@ -11,6 +11,7 @@ import (
 )
 
 func InitGinRoutes(svc ports.UserService, logger logger.LoggerType, conf config.Config) {
+	gin.SetMode(gin.DebugMode)
 	router := gin.Default()
 
 	router.Use(cors.New(cors.Config{
