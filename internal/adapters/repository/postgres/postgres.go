@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	appConfig "github.com/AntonyIS/notlify-user-svc/config"
-	"github.com/AntonyIS/notlify-user-svc/internal/adapters/logger"
-	"github.com/AntonyIS/notlify-user-svc/internal/core/domain"
+	appConfig "github.com/AntonyIS/notelify-user-service/config"
+	"github.com/AntonyIS/notelify-user-service/internal/adapters/logger"
+	"github.com/AntonyIS/notelify-user-service/internal/core/domain"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"

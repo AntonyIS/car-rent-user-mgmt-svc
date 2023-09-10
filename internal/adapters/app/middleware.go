@@ -7,7 +7,7 @@ import (
 	"os"
 	"time"
 
-	"github.com/AntonyIS/notlify-user-svc/internal/core/ports"
+	"github.com/AntonyIS/notelify-user-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
 )

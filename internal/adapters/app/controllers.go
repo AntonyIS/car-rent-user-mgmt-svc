@@ -3,8 +3,8 @@ package app
 import (
 	"net/http"
 
-	"github.com/AntonyIS/notlify-user-svc/internal/core/domain"
-	"github.com/AntonyIS/notlify-user-svc/internal/core/ports"
+	"github.com/AntonyIS/notelify-user-service/internal/core/domain"
+	"github.com/AntonyIS/notelify-user-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 )
 

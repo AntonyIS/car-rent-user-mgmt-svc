@@ -15,7 +15,6 @@ type Config struct {
 	AWS_DEFAULT_REGION    string
 	RDSInstanceIdentifier string
 	LoggerURL             string
-	ContentServiceURL     string
 	SECRET_KEY            string
 	DatabaseName          string
 	DatabaseUser          string
@@ -39,7 +38,6 @@ func NewConfig(Env string) (*Config, error) {
 		RDSInstanceIdentifier = os.Getenv("RDSInstanceIdentifier")
 		SECRET_KEY            = os.Getenv("SECRET_KEY")
 		LoggerURL             = os.Getenv("LoggerURL")
-		ContentServiceURL     = os.Getenv("ContentServiceURL")
 		DatabaseUser          = os.Getenv("DatabaseUser")
 		DatabasePassword      = os.Getenv("DatabasePassword")
 		Port                  = "8000"
@@ -67,7 +65,7 @@ func NewConfig(Env string) (*Config, error) {
 		Testing = false
 		Debugging = false
 		DatabaseHost = os.Getenv("DatabaseHost")
-		DatabaseName = "init_notlify_db"
+		DatabaseName = "notlify_db_init"
 	}
 
 	config := Config{
@@ -80,7 +78,6 @@ func NewConfig(Env string) (*Config, error) {
 		SECRET_KEY:            SECRET_KEY,
 		AWS_DEFAULT_REGION:    AWS_DEFAULT_REGION,
 		LoggerURL:             LoggerURL,
-		ContentServiceURL:     ContentServiceURL,
 		Debugging:             Debugging,
 		Testing:               Testing,
 		DatabaseName:          DatabaseName,
