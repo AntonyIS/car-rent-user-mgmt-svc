@@ -15,7 +15,6 @@ type Config struct {
 	AWS_DEFAULT_REGION    string
 	RDSInstanceIdentifier string
 	LoggerURL             string
-	ContentServiceURL     string
 	SECRET_KEY            string
 	DatabaseName          string
 	DatabaseUser          string
@@ -39,10 +38,9 @@ func NewConfig(Env string) (*Config, error) {
 		RDSInstanceIdentifier = os.Getenv("RDSInstanceIdentifier")
 		SECRET_KEY            = os.Getenv("SECRET_KEY")
 		LoggerURL             = os.Getenv("LoggerURL")
-		ContentServiceURL     = os.Getenv("ContentServiceURL")
 		DatabaseUser          = os.Getenv("DatabaseUser")
 		DatabasePassword      = os.Getenv("DatabasePassword")
-		Port                  = "8080"
+		Port                  = "8000"
 		UserTable             = "UserTable"
 		DatabaseName          = "postgres"
 		DatabasePort          = 5432
@@ -80,7 +78,6 @@ func NewConfig(Env string) (*Config, error) {
 		SECRET_KEY:            SECRET_KEY,
 		AWS_DEFAULT_REGION:    AWS_DEFAULT_REGION,
 		LoggerURL:             LoggerURL,
-		ContentServiceURL:     ContentServiceURL,
 		Debugging:             Debugging,
 		Testing:               Testing,
 		DatabaseName:          DatabaseName,
