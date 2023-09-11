@@ -1,8 +1,8 @@
 build:
-	go build -o bin/notelify-user-service
+	go build -o bin/notelify-users-service
 
 serve-prod: build
-	./bin/notelify-user-service -env=prod
+	./bin/notelify-users-service -env=prod
 
 serve: build
-	./bin/notelify-user-service -env=dev
+	./bin/notelify-users-service -env=dev

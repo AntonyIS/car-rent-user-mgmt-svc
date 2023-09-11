@@ -1,6 +1,6 @@
 package ports
 
-import "github.com/AntonyIS/notelify-user-service/internal/core/domain"
+import "github.com/AntonyIS/notelify-users-service/internal/core/domain"
 
 type UserService interface {
 	CreateUser(user *domain.User) (*domain.User, error)
