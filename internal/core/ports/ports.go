@@ -1,6 +1,6 @@
 package ports
 
-import "github.com/AntonyIS/notelify-user-service/internal/core/domain"
+import "github.com/AntonyIS/notelify-users-service/internal/core/domain"
 
 type UserService interface {
 	CreateUser(user *domain.User) (*domain.User, error)
@@ -9,6 +9,7 @@ type UserService interface {
 	ReadUsers() ([]domain.User, error)
 	UpdateUser(user *domain.User) (*domain.User, error)
 	DeleteUser(id string) (string, error)
+	DeleteAllUsers() (string, error)
 }
 
 type UserRepository interface {
@@ -18,4 +19,5 @@ type UserRepository interface {
 	ReadUsers() ([]domain.User, error)
 	UpdateUser(user *domain.User) (*domain.User, error)
 	DeleteUser(id string) (string, error)
+	DeleteAllUsers() (string, error)
 }

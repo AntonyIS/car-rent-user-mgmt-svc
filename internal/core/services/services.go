@@ -3,8 +3,8 @@ package services
 import (
 	"errors"
 
-	"github.com/AntonyIS/notelify-user-service/internal/core/domain"
-	"github.com/AntonyIS/notelify-user-service/internal/core/ports"
+	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
+	"github.com/AntonyIS/notelify-users-service/internal/core/ports"
 	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
@@ -57,4 +57,8 @@ func (svc *UserManagementService) DeleteUser(id string) (string, error) {
 	}
 
 	return svc.repo.DeleteUser(id)
+}
+
+func (svc *UserManagementService) DeleteAllUsers() (string, error) {
+	return svc.repo.DeleteAllUsers()
 }

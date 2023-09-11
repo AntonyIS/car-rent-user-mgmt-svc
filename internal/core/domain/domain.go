@@ -21,11 +21,13 @@ type User struct {
 }
 
 type Content struct {
-	ContentId       string    `json:"content_id"`
-	CreatorId       string    `json:"creator_id"`
-	Title           string    `json:"title"`
-	Body            string    `json:"body"`
-	PublicationDate time.Time `json:"publication_date"`
+	CreatorName         string    `json:"creator_id"`
+	Title               string    `json:"title"`
+	Body                string    `json:"body"`
+	ContentImage        string    `json:"content_image"`
+	PublicationDate     time.Time `json:"publication_date"`
+	ContentId           string    `json:"content_id"`
+	CreatorProfileImage string    `json:"creator_profile_image"`
 }
 
 func (u User) CheckPasswordHarsh(password string) bool {

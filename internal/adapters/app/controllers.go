@@ -3,8 +3,8 @@ package app
 import (
 	"net/http"
 
-	"github.com/AntonyIS/notelify-user-service/internal/core/domain"
-	"github.com/AntonyIS/notelify-user-service/internal/core/ports"
+	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
+	"github.com/AntonyIS/notelify-users-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 )
 
@@ -14,6 +14,7 @@ type GinHandler interface {
 	ReadUsers(ctx *gin.Context)
 	UpdateUser(ctx *gin.Context)
 	DeleteUser(ctx *gin.Context)
+	DeleteAllUsers(ctx *gin.Context)
 	Login(ctx *gin.Context)
 	Logout(ctx *gin.Context)
 }
@@ -184,4 +185,18 @@ func (h handler) Logout(ctx *gin.Context) {
 		"message": "Token invalidated successfuly",
 	})
 
+}
+
+func (h handler) DeleteAllUsers(ctx *gin.Context) {
+	message, err := h.svc.DeleteAllUsers()
+	if err != nil {
+		ctx.JSON(http.StatusNotFound, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusOK, gin.H{
+		"message": message,
+	})
 }

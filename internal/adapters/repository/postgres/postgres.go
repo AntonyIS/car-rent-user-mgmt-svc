@@ -8,9 +8,9 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	appConfig "github.com/AntonyIS/notelify-user-service/config"
-	"github.com/AntonyIS/notelify-user-service/internal/adapters/logger"
-	"github.com/AntonyIS/notelify-user-service/internal/core/domain"
+	appConfig "github.com/AntonyIS/notelify-users-service/config"
+	"github.com/AntonyIS/notelify-users-service/internal/adapters/logger"
+	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
 	"github.com/aws/aws-sdk-go/aws"
 	"github.com/aws/aws-sdk-go/aws/session"
 	"github.com/aws/aws-sdk-go/service/rds"
@@ -129,7 +129,7 @@ func (psql *PostgresDBClient) ReadUser(id string) (*domain.User, error) {
 		psql.loggerService.PostLogMessage(fmt.Sprintf("user with id [%s] not found: %s", id, err.Error()))
 		return nil, errors.New(fmt.Sprintf("user with id [%s] not found", id))
 	}
-	contentSvcURL := fmt.Sprintf("http://127.0.0.1:8081/v1/contents/author/%s", id)
+	contentSvcURL := fmt.Sprintf("http://127.0.0.1:8081/v1/contents/users/%s", id)
 	var contents []domain.Content
 	contents, err = getUserContent(contentSvcURL)
 	if err != nil {
@@ -204,6 +204,15 @@ func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
 		return "", err
 	}
 	return "Entity deleted successfully", nil
+}
+
+func (psql *PostgresDBClient) DeleteAllUsers() (string, error) {
+	queryString := fmt.Sprintf(`DELETE FROM %s`, psql.tablename)
+	_, err := psql.db.Exec(queryString)
+	if err != nil {
+		return "", err
+	}
+	return "All items deletes successfully", nil
 }
 
 func migrateDB(db *sql.DB, userTable string) error {
