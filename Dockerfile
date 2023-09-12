@@ -37,3 +37,4 @@ EXPOSE 8000
 
 #Command to run the executable
 CMD ["./src" , "-env=prod"]
+

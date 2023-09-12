@@ -26,10 +26,13 @@ type Config struct {
 }
 
 func NewConfig(Env string) (*Config, error) {
-	err := godotenv.Load(".env")
-
-	if err != nil {
-		return nil, err
+	if Env == "dev" || Env == "testing" {
+		// Read .env file in dev environment
+		// Production env has this sorted out 
+		err := godotenv.Load(".env")
+		if err != nil {
+			return nil, err
+		}
 	}
 	var (
 		AWS_ACCESS_KEY        = os.Getenv("AWS_ACCESS_KEY")
