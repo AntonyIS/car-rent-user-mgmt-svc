@@ -21,6 +21,10 @@ func InitGinRoutes(svc ports.UserService, logger logger.LoggerType, conf config.
 
 	usersRoutes := router.Group("/v1/users")
 
+	middleware := NewMiddleware(svc,conf.SECRET_KEY)
+
+	usersRoutes.Use(middleware.Authorize)
+
 	{
 		usersRoutes.GET("/", handler.ReadUsers)
 		usersRoutes.GET("/:id", handler.ReadUser)
