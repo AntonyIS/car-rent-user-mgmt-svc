@@ -40,7 +40,7 @@ func (h handler) CreateUser(ctx *gin.Context) {
 		ProfileImage: "",
 		Following:    0,
 		Followers:    0,
-		Contents:     []domain.Content{},
+		Articles:     []domain.Article{},
 	}
 	if err := ctx.ShouldBindJSON(&res); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -60,8 +60,8 @@ func (h handler) CreateUser(ctx *gin.Context) {
 }
 
 func (h handler) ReadUser(ctx *gin.Context) {
-	id := ctx.Param("id")
-	user, err := h.svc.ReadUser(id)
+	user_id := ctx.Param("id")
+	user, err := h.svc.ReadUserWithId(user_id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"err": err.Error(),
@@ -84,8 +84,8 @@ func (h handler) ReadUsers(ctx *gin.Context) {
 }
 
 func (h handler) UpdateUser(ctx *gin.Context) {
-	id := ctx.Param("id")
-	_, err := h.svc.ReadUser(id)
+	user_id := ctx.Param("id")
+	_, err := h.svc.ReadUserWithId(user_id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"err": err.Error(),
@@ -100,7 +100,7 @@ func (h handler) UpdateUser(ctx *gin.Context) {
 		})
 		return
 	}
-	res.Id = id
+	res.UserId = user_id
 	user, err := h.svc.UpdateUser(res)
 	if err != nil {
 		ctx.JSON(http.StatusInternalServerError, gin.H{
@@ -113,8 +113,8 @@ func (h handler) UpdateUser(ctx *gin.Context) {
 }
 
 func (h handler) DeleteUser(ctx *gin.Context) {
-	id := ctx.Param("id")
-	message, err := h.svc.DeleteUser(id)
+	user_id := ctx.Param("id")
+	message, err := h.svc.DeleteUser(user_id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
@@ -145,7 +145,7 @@ func (h handler) Login(ctx *gin.Context) {
 
 	if dbUser.CheckPasswordHarsh(user.Password) {
 		middleware := NewMiddleware(h.svc, h.secretKey)
-		tokenString, err := middleware.GenerateToken(dbUser.Id)
+		tokenString, err := middleware.GenerateToken(dbUser.UserId)
 
 		if err != nil {
 			ctx.JSON(http.StatusNotFound, gin.H{

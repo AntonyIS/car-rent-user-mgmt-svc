@@ -26,10 +26,13 @@ type Config struct {
 }
 
 func NewConfig(Env string) (*Config, error) {
-	if Env == "dev" || Env == "testing" {
-		// Read .env file in dev environment
-		// Production env has this sorted out 
+	if Env == "dev" {
 		err := godotenv.Load(".env")
+		if err != nil {
+			return nil, err
+		}
+	} else if Env == "test" {
+		err := godotenv.Load("../../../.env")
 		if err != nil {
 			return nil, err
 		}
@@ -41,34 +44,38 @@ func NewConfig(Env string) (*Config, error) {
 		RDSInstanceIdentifier = os.Getenv("RDSInstanceIdentifier")
 		SECRET_KEY            = os.Getenv("SECRET_KEY")
 		LoggerURL             = os.Getenv("LoggerURL")
-		DatabaseUser          = os.Getenv("DatabaseUser")
-		DatabasePassword      = os.Getenv("DatabasePassword")
+		DatabaseUser          = os.Getenv("DATABASEUSER")
+		DatabasePassword      = os.Getenv("DATABASEPASSWORD")
+		DatabaseName          = os.Getenv("DATABASENAME")
 		Port                  = "8000"
 		UserTable             = "UserTable"
-		DatabaseName          = "postgres"
 		DatabasePort          = 5432
-		DatabaseHost          = ""
+		DatabaseHost          = "localhost"
 		Testing               = false
 		Debugging             = false
 	)
-
 	switch Env {
-	case "testing":
-		Testing = true
-		Debugging = true
-		DatabaseHost = "localhost"
-
-	case "dev":
-		Testing = true
-		Debugging = true
-		DatabaseHost = "localhost"
-		DatabaseUser = os.Getenv("DatabaseUser")
-
 	case "prod":
 		Testing = false
 		Debugging = false
 		DatabaseHost = os.Getenv("DatabaseHost")
 		DatabaseName = "notlify_db_init"
+
+	case "test_prod":
+		Testing = true
+		Debugging = true
+		DatabaseHost = os.Getenv("DatabaseHost")
+		DatabaseName = "notlify_db_init"
+		UserTable = "TestUsers"
+
+	case "test":
+		Testing = true
+		Debugging = true
+		UserTable = "TestUsers"
+
+	case "dev":
+		Testing = true
+		Debugging = true
 	}
 
 	config := Config{
