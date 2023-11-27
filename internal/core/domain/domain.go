@@ -7,33 +7,31 @@ import (
 )
 
 type User struct {
-	Id           string    `json:"id"`
+	UserId           string    `json:"user_id"`
 	Firstname    string    `json:"firstname"`
 	Lastname     string    `json:"lastname"`
 	Email        string    `json:"email"`
 	Password     string    `json:"password"`
 	Handle       string    `json:"handle"`
 	About        string    `json:"about"`
-	Contents     []Content `json:"contents"`
+	Articles     []Article `json:"article"`
 	ProfileImage string    `json:"profile_image"`
 	Following    int       `json:"following"`
 	Followers    int       `json:"followers"`
 }
 
-type Content struct {
-	CreatorName         string    `json:"creator_id"`
-	Title               string    `json:"title"`
-	Body                string    `json:"body"`
-	ContentImage        string    `json:"content_image"`
-	PublicationDate     time.Time `json:"publication_date"`
-	ContentId           string    `json:"content_id"`
-	CreatorProfileImage string    `json:"creator_profile_image"`
+type Article struct {
+	ArticleID    string    `json:"article_id"`
+	Title        string    `json:"title"`
+	Subtitle     string    `json:"subtitle"`
+	Introduction string    `json:"introduction"`
+	Body         string    `json:"body"`
+	Tags         []string  `json:"tags"`
+	PublishDate  time.Time `json:"publish_date"`
+	AuthorID     string    `json:"author_id"`
 }
 
 func (u User) CheckPasswordHarsh(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
-	if err != nil {
-		return false
-	}
-	return true
+	return err == nil
 }

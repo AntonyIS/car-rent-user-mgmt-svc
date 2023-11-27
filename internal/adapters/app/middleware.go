@@ -24,16 +24,16 @@ func NewMiddleware(svc ports.UserService, secretKey string) *middleware {
 	}
 }
 
-func (m middleware) GenerateToken(id string) (string, error) {
+func (m middleware) GenerateToken(user_id string) (string, error) {
 	key := []byte(m.secretKey)
 	token := jwt.New(jwt.SigningMethodHS256)
 	claims := token.Claims.(jwt.MapClaims)
-	user, err := m.svc.ReadUser(id)
+	user, err := m.svc.ReadUserWithId(user_id)
 	if err != nil {
 		return "", err
 	}
 
-	claims["user_id"] = user.Id
+	claims["user_id"] = user.UserId
 	claims["exp"] = time.Now().Add(time.Minute * 30).Unix()
 
 	tokenString, err := token.SignedString(key)

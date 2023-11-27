@@ -4,5 +4,5 @@ build:
 serve-prod: build
 	./bin/notelify-users-service -env=prod
 
-serve: build
+serve-dev: build
 	./bin/notelify-users-service -env=dev
