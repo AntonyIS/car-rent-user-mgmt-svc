@@ -1,8 +1,6 @@
 package cmd
 
 import (
-	"flag"
-
 	"github.com/AntonyIS/notelify-users-service/config"
 	"github.com/AntonyIS/notelify-users-service/internal/adapters/app"
 	"github.com/AntonyIS/notelify-users-service/internal/adapters/logger"
@@ -10,16 +8,9 @@ import (
 	"github.com/AntonyIS/notelify-users-service/internal/core/services"
 )
 
-var env string
-
-func init() {
-	flag.StringVar(&env, "env", "dev", "The environment the application is running")
-	flag.Parse()
-}
-
 func RunService() {
 	// Read application environment and load configurations
-	conf, err := config.NewConfig(env)
+	conf, err := config.NewConfig()
 	if err != nil {
 		panic(err)
 	}

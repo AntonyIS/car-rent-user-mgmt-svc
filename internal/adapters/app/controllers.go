@@ -22,12 +22,14 @@ type GinHandler interface {
 type handler struct {
 	svc       ports.UserService
 	secretKey string
+	logger    ports.Logger
 }
 
-func NewGinHandler(svc ports.UserService, secretKey string) GinHandler {
+func NewGinHandler(svc ports.UserService,logger ports.Logger, secretKey string) GinHandler {
 	routerHandler := handler{
 		svc:       svc,
 		secretKey: secretKey,
+		logger:    logger,
 	}
 
 	return routerHandler
@@ -60,7 +62,7 @@ func (h handler) CreateUser(ctx *gin.Context) {
 }
 
 func (h handler) ReadUser(ctx *gin.Context) {
-	user_id := ctx.Param("id")
+	user_id := ctx.Param("user_id")
 	user, err := h.svc.ReadUserWithId(user_id)
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
@@ -144,7 +146,7 @@ func (h handler) Login(ctx *gin.Context) {
 	}
 
 	if dbUser.CheckPasswordHarsh(user.Password) {
-		middleware := NewMiddleware(h.svc, h.secretKey)
+		middleware := NewMiddleware(h.svc, h.logger, h.secretKey)
 		tokenString, err := middleware.GenerateToken(dbUser.UserId)
 
 		if err != nil {

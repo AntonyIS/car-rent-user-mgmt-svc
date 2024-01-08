@@ -1,6 +1,8 @@
 package services
 
 import (
+	"fmt"
+
 	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
 	"github.com/AntonyIS/notelify-users-service/internal/core/ports"
 	"github.com/google/uuid"
@@ -27,7 +29,9 @@ func (svc *UserManagementService) CreateUser(user *domain.User) (*domain.User, e
 		return nil, err
 	}
 	user.Password = string(hashedPassword)
+	user.Handle = fmt.Sprintf(`%s@notelify`, user.Firstname)
 	return svc.repo.CreateUser(user)
+
 }
 
 func (svc *UserManagementService) ReadUserWithId(user_id string) (*domain.User, error) {

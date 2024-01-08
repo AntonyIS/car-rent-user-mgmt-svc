@@ -7,12 +7,19 @@ import (
 )
 
 type ConsoleFileLogger struct {
-	logger *log.Logger
+	logger  *log.Logger
 	logFile *os.File
 }
 
 func NewLogger() ConsoleFileLogger {
 	path := "internal/adapters/logger/logs.log"
+
+	// Create the directory structure if it doesn't exist
+	err := os.MkdirAll("internal/adapters/logger", os.ModePerm)
+	if err != nil {
+		log.Fatal("Error creating directory: ", err)
+	}
+
 	logFile, err := os.Create(path)
 	if err != nil {
 		log.Fatal("Error creating a file: ", err)
@@ -37,7 +44,7 @@ func (l *ConsoleFileLogger) Error(message string) {
 }
 
 func (cfl *ConsoleFileLogger) Close() {
-    if cfl.logFile != nil {
-        cfl.logFile.Close()
-    }
+	if cfl.logFile != nil {
+		cfl.logFile.Close()
+	}
 }

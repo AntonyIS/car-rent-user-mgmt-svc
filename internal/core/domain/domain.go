@@ -7,14 +7,14 @@ import (
 )
 
 type User struct {
-	UserId           string    `json:"user_id"`
+	UserId       string    `json:"user_id"`
 	Firstname    string    `json:"firstname"`
 	Lastname     string    `json:"lastname"`
 	Email        string    `json:"email"`
 	Password     string    `json:"password"`
 	Handle       string    `json:"handle"`
 	About        string    `json:"about"`
-	Articles     []Article `json:"article"`
+	Articles     []Article `json:"articles"`
 	ProfileImage string    `json:"profile_image"`
 	Following    int       `json:"following"`
 	Followers    int       `json:"followers"`

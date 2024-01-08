@@ -15,33 +15,22 @@ func InitGinRoutes(svc ports.UserService, logger ports.Logger, conf config.Confi
 
 	router := gin.Default()
 	router.Use(ginRequestLogger(logger))
-	if conf.Env == "prod" {
-		router.Use(cors.New(cors.Config{
-			AllowOrigins:     []string{"http://notelify-client-service:3000", "http://localhost:3000"},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-			AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-			ExposeHeaders:    []string{"Content-Length"},
-			AllowCredentials: true,
-		}))
 
-	} else {
-		router.Use(cors.New(cors.Config{
-			AllowOrigins:     []string{"http://localhost:3000"},
-			AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
-			AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
-			ExposeHeaders:    []string{"Content-Length"},
-			AllowCredentials: true,
-		}))
+	router.Use(cors.New(cors.Config{
+		AllowOrigins:     []string{"*"},
+		AllowMethods:     []string{"GET", "POST", "PUT", "DELETE"},
+		AllowHeaders:     []string{"Origin", "Content-Length", "Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true,
+	}))
 
-	}
-
-	handler := NewGinHandler(svc, conf.SECRET_KEY)
+	handler := NewGinHandler(svc, logger, conf.SECRET_KEY)
 
 	usersRoutes := router.Group("/v1/users")
 
-	middleware := NewMiddleware(svc,conf.SECRET_KEY)
+	// middleware := NewMiddleware(svc, logger, conf.SECRET_KEY)
 
-	usersRoutes.Use(middleware.Authorize)
+	// usersRoutes.Use(middleware.Authorize)
 
 	{
 		usersRoutes.GET("/", handler.ReadUsers)
@@ -54,8 +43,8 @@ func InitGinRoutes(svc ports.UserService, logger ports.Logger, conf config.Confi
 		usersRoutes.POST("/logout", handler.Logout)
 	}
 
-	logger.Info(fmt.Sprintf("Server running on port :%s", conf.Port))
-	router.Run(fmt.Sprintf(":%s", conf.Port))
+	logger.Info(fmt.Sprintf("Server running on port 0.0.0.0:%s", conf.SERVER_PORT))
+	router.Run(fmt.Sprintf("0.0.0.0:%s", conf.SERVER_PORT))
 }
 
 func ginRequestLogger(logger ports.Logger) gin.HandlerFunc {

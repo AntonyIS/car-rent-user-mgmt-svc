@@ -3,7 +3,6 @@ package postgres
 import (
 	"database/sql"
 	"encoding/json"
-	"errors"
 	"fmt"
 	"io/ioutil"
 	"net/http"
@@ -11,61 +10,28 @@ import (
 	appConfig "github.com/AntonyIS/notelify-users-service/config"
 	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
 	"github.com/AntonyIS/notelify-users-service/internal/core/ports"
-	"github.com/aws/aws-sdk-go/aws"
-	"github.com/aws/aws-sdk-go/aws/session"
-	"github.com/aws/aws-sdk-go/service/rds"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
 
 type PostgresDBClient struct {
-	db            *sql.DB
-	tablename     string
-	loggerService ports.Logger
+	db                 *sql.DB
+	tablename          string
+	articlesServiceURL string
+	loggerService      ports.Logger
 }
 
 func NewPostgresClient(appConfig appConfig.Config, logger ports.Logger) (*PostgresDBClient, error) {
-	dbname := appConfig.DatabaseName
-	tablename := appConfig.UserTable
-	user := appConfig.DatabaseUser
-	password := appConfig.DatabasePassword
-	port := appConfig.DatabasePort
-	host := appConfig.DatabaseHost
-	region := appConfig.AWS_DEFAULT_REGION
-	rdsInstanceIdentifier := appConfig.RDSInstanceIdentifier
+	dbname := appConfig.POSTGRES_DB
+	tablename := appConfig.ARTICLE_TABLE
+	user := appConfig.POSTGRES_USER
+	password := appConfig.POSTGRES_PASSWORD
+	port := appConfig.POSTGRES_PORT
+	host := appConfig.POSTGRES_HOST
+	articlesServiceURL := appConfig.ARTICLE_SERVICE_URL
 
-	var dsn string
-
-	if appConfig.Env == "dev" {
-		dsn = fmt.Sprintf("host=%s port=%d user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
-	} else {
-
-		// Create a new AWS session
-		awsSession := session.Must(session.NewSession(&aws.Config{
-			Region: aws.String(region),
-		}))
-
-		// Create an RDS client
-		rdsClient := rds.New(awsSession)
-
-		// Describe the DB instance to get its endpoint
-		describeInput := &rds.DescribeDBInstancesInput{
-			DBInstanceIdentifier: &rdsInstanceIdentifier,
-		}
-
-		describeOutput, err := rdsClient.DescribeDBInstances(describeInput)
-
-		if err != nil {
-			logger.Error(fmt.Sprintf("Failed to describe DB instance: %s", err.Error()))
-		}
-
-		if len(describeOutput.DBInstances) == 0 {
-			logger.Error("DB instance not found")
-		}
-
-		dsn = fmt.Sprintf("host=%s port=%d dbname=%s user=%s password=%s sslmode=require", host, port, dbname, user, password)
-	}
-
+	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
+	
 	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
@@ -87,7 +53,7 @@ func NewPostgresClient(appConfig appConfig.Config, logger ports.Logger) (*Postgr
 
 	}
 
-	return &PostgresDBClient{db: db, tablename: tablename, loggerService: logger}, nil
+	return &PostgresDBClient{db: db, tablename: tablename, loggerService: logger, articlesServiceURL: articlesServiceURL}, nil
 }
 
 func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error) {
@@ -122,16 +88,16 @@ func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error
 
 func (psql *PostgresDBClient) ReadUserWithId(user_id string) (*domain.User, error) {
 	var user domain.User
-	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,contents,profile_image,following,followers FROM %s WHERE id=$1`, psql.tablename)
+	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers FROM %s WHERE user_id=$1`, psql.tablename)
 	err := psql.db.QueryRow(queryString, user_id).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, pq.Array(&user.Articles), &user.ProfileImage, &user.Following, &user.Followers)
 
 	if err != nil {
 		psql.loggerService.Error(fmt.Sprintf("user with id [%s] not found: %s", user_id, err.Error()))
-		return nil, errors.New(fmt.Sprintf("user with id [%s] not found", user_id))
+		return nil, fmt.Errorf(fmt.Sprintf("user with id [%s] not found", user_id))
 	}
-	contentSvcURL := fmt.Sprintf("http://127.0.0.1:8081/v1/contents/users/%s", user_id)
+	articleSvcURL := fmt.Sprintf("%s/author/%s", psql.articlesServiceURL, user_id)
 	var contents []domain.Article
-	contents, err = getUserContent(contentSvcURL)
+	contents, err = getUserArticles(articleSvcURL)
 	if err != nil {
 		psql.loggerService.Error("unable to read user content")
 	}
@@ -166,7 +132,7 @@ func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
 
 func (psql *PostgresDBClient) ReadUserWithEmail(email string) (*domain.User, error) {
 	var user domain.User
-	queryString := fmt.Sprintf(`SELECT id,firstname,lastname,email,handle,about,contents,profile_image,following,followers FROM %s WHERE email=$1`, psql.tablename)
+	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,contents,profile_image,following,followers FROM %s WHERE email=$1`, psql.tablename)
 	err := psql.db.QueryRow(queryString, email).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, &user.Articles, &user.ProfileImage, &user.Following, &user.Followers)
 	if err != nil {
 		psql.loggerService.Error(fmt.Sprintf("user with id [%s] not found: %s", email, err.Error()))
@@ -196,10 +162,10 @@ func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error
 	return user, nil
 }
 
-func (psql *PostgresDBClient) DeleteUser(id string) (string, error) {
+func (psql *PostgresDBClient) DeleteUser(user_id string) (string, error) {
 
-	queryString := fmt.Sprintf(`DELETE FROM %s WHERE id = $1`, psql.tablename)
-	_, err := psql.db.Exec(queryString, id)
+	queryString := fmt.Sprintf(`DELETE FROM %s WHERE user_id = $1`, psql.tablename)
+	_, err := psql.db.Exec(queryString, user_id)
 	if err != nil {
 		psql.loggerService.Error(err.Error())
 		return "", err
@@ -242,7 +208,7 @@ func migrateDB(db *sql.DB, userTable string) error {
 
 }
 
-func getUserContent(url string) ([]domain.Article, error) {
+func getUserArticles(url string) ([]domain.Article, error) {
 	response, err := http.Get(url)
 	if err != nil {
 		return nil, err
