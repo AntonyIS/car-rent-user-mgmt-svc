@@ -37,7 +37,7 @@ func InitGinRoutes(svc ports.UserService, logger ports.Logger, conf config.Confi
 		usersRoutes.GET("/:user_id", handler.ReadUser)
 		usersRoutes.PUT("/:user_id", handler.UpdateUser)
 		usersRoutes.DELETE("/:user_id", handler.DeleteUser)
-		usersRoutes.DELETE("/delete/all", handler.DeleteAllUsers)
+		usersRoutes.DELETE("/", handler.DeleteAllUsers)
 		usersRoutes.POST("/", handler.CreateUser)
 		usersRoutes.POST("/login", handler.Login)
 		usersRoutes.POST("/logout", handler.Logout)

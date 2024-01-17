@@ -35,3 +35,9 @@ func (u User) CheckPasswordHarsh(password string) bool {
 	err := bcrypt.CompareHashAndPassword([]byte(u.Password), []byte(password))
 	return err == nil
 }
+
+type LogMessage struct {
+	LogLevel string `json:"log_level"`
+	Message  string `json:"message"`
+	Service  string `json:"service"`
+}
