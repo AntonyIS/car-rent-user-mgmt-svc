@@ -21,3 +21,11 @@ type UserRepository interface {
 	DeleteUser(user_id string) (string, error)
 	DeleteAllUsers() (string, error)
 }
+
+type LoggingService interface {
+	SendLog(LogEntry domain.LogMessage)
+	LogDebug(LogEntry domain.LogMessage)
+	LogInfo(LogEntry domain.LogMessage)
+	LogWarning(LogEntry domain.LogMessage)
+	LogError(LogEntry domain.LogMessage)
+}

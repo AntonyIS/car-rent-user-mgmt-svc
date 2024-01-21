@@ -9,7 +9,6 @@ import (
 
 	appConfig "github.com/AntonyIS/notelify-users-service/config"
 	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
-	"github.com/AntonyIS/notelify-users-service/internal/core/ports"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
 )
@@ -18,10 +17,9 @@ type PostgresDBClient struct {
 	db                 *sql.DB
 	tablename          string
 	articlesServiceURL string
-	loggerService      ports.Logger
 }
 
-func NewPostgresClient(appConfig appConfig.Config, logger ports.Logger) (*PostgresDBClient, error) {
+func NewPostgresClient(appConfig appConfig.Config) (*PostgresDBClient, error) {
 	dbname := appConfig.POSTGRES_DB
 	tablename := appConfig.ARTICLE_TABLE
 	user := appConfig.POSTGRES_USER
@@ -31,29 +29,25 @@ func NewPostgresClient(appConfig appConfig.Config, logger ports.Logger) (*Postgr
 	articlesServiceURL := appConfig.ARTICLE_SERVICE_URL
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
-	
+
 	db, err := sql.Open("postgres", dsn)
 
 	if err != nil {
-		logger.Error(err.Error())
 		return nil, err
 	}
 
 	err = db.Ping()
 
 	if err != nil {
-		logger.Error(err.Error())
 		return nil, err
 	}
 
 	err = migrateDB(db, tablename)
 	if err != nil {
-		logger.Error(err.Error())
 		return nil, err
-
 	}
 
-	return &PostgresDBClient{db: db, tablename: tablename, loggerService: logger, articlesServiceURL: articlesServiceURL}, nil
+	return &PostgresDBClient{db: db, tablename: tablename, articlesServiceURL: articlesServiceURL}, nil
 }
 
 func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error) {
@@ -79,7 +73,6 @@ func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error
 	)
 
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
 
@@ -90,26 +83,22 @@ func (psql *PostgresDBClient) ReadUserWithId(user_id string) (*domain.User, erro
 	var user domain.User
 	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers FROM %s WHERE user_id=$1`, psql.tablename)
 	err := psql.db.QueryRow(queryString, user_id).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, pq.Array(&user.Articles), &user.ProfileImage, &user.Following, &user.Followers)
-
 	if err != nil {
-		psql.loggerService.Error(fmt.Sprintf("user with id [%s] not found: %s", user_id, err.Error()))
-		return nil, fmt.Errorf(fmt.Sprintf("user with id [%s] not found", user_id))
+		return nil, err
 	}
 	articleSvcURL := fmt.Sprintf("%s/author/%s", psql.articlesServiceURL, user_id)
 	var contents []domain.Article
 	contents, err = getUserArticles(articleSvcURL)
 	if err != nil {
-		psql.loggerService.Error("unable to read user content")
+		return nil, err
 	}
 	user.Articles = contents
 	return &user, nil
 }
 
 func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
-
 	rows, err := psql.db.Query(fmt.Sprintf("SELECT user_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers FROM %s", psql.tablename))
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
 	defer rows.Close()
@@ -119,13 +108,10 @@ func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
 		var user domain.User
 
 		if err := rows.Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, pq.Array(&user.Articles), &user.ProfileImage, &user.Following, &user.Followers); err != nil {
-			psql.loggerService.Error(err.Error())
 
 			return nil, err
 		}
-
 		users = append(users, user)
-
 	}
 	return users, nil
 }
@@ -135,10 +121,8 @@ func (psql *PostgresDBClient) ReadUserWithEmail(email string) (*domain.User, err
 	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,contents,profile_image,following,followers FROM %s WHERE email=$1`, psql.tablename)
 	err := psql.db.QueryRow(queryString, email).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, &user.Articles, &user.ProfileImage, &user.Following, &user.Followers)
 	if err != nil {
-		psql.loggerService.Error(fmt.Sprintf("user with id [%s] not found: %s", email, err.Error()))
-		return nil, fmt.Errorf("user with id [%s] not found", email)
+		return nil, err
 	}
-
 	return &user, nil
 }
 
@@ -156,18 +140,15 @@ func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error
 
 	_, err := psql.db.Exec(queryString, user.Firstname, user.Lastname, user.Handle, user.About, user.Articles, user.ProfileImage, user.Following, user.Followers)
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return nil, err
 	}
 	return user, nil
 }
 
 func (psql *PostgresDBClient) DeleteUser(user_id string) (string, error) {
-
 	queryString := fmt.Sprintf(`DELETE FROM %s WHERE user_id = $1`, psql.tablename)
 	_, err := psql.db.Exec(queryString, user_id)
 	if err != nil {
-		psql.loggerService.Error(err.Error())
 		return "", err
 	}
 	return "Entity deleted successfully", nil

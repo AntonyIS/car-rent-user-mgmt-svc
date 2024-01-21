@@ -2,15 +2,17 @@ package app
 
 import (
 	"fmt"
+	"log"
 	"time"
 
 	"github.com/AntonyIS/notelify-users-service/config"
+	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
 	"github.com/AntonyIS/notelify-users-service/internal/core/ports"
 	"github.com/gin-contrib/cors"
 	"github.com/gin-gonic/gin"
 )
 
-func InitGinRoutes(svc ports.UserService, logger ports.Logger, conf config.Config) {
+func InitGinRoutes(svc ports.UserService, logger ports.LoggingService, conf config.Config) {
 	gin.SetMode(gin.DebugMode)
 
 	router := gin.Default()
@@ -43,23 +45,42 @@ func InitGinRoutes(svc ports.UserService, logger ports.Logger, conf config.Confi
 		usersRoutes.POST("/logout", handler.Logout)
 	}
 
-	logger.Info(fmt.Sprintf("Server running on port 0.0.0.0:%s", conf.SERVER_PORT))
+	logEntry := domain.LogMessage{
+		LogLevel: "INFO",
+		Service:  "users",
+		Message:  fmt.Sprintf("Server running on port 0.0.0.0:%s", conf.SERVER_PORT),
+	}
+	logger.LogError(logEntry)
+	log.Printf("Server running on port 0.0.0.0:%s", conf.SERVER_PORT)
 	router.Run(fmt.Sprintf("0.0.0.0:%s", conf.SERVER_PORT))
 }
 
-func ginRequestLogger(logger ports.Logger) gin.HandlerFunc {
+func ginRequestLogger(logger ports.LoggingService) gin.HandlerFunc {
 	return func(c *gin.Context) {
 		start := time.Now()
 		c.Next()
 		end := time.Now()
 		latency := end.Sub(start)
-		logger.Info(fmt.Sprintf("%s %s %s %d %s %s",
-			c.Request.Method,
-			c.Request.URL.Path,
-			c.Request.Proto,
-			c.Writer.Status(),
-			latency.String(),
-			c.ClientIP(),
-		))
+		logEntry := domain.LogMessage{
+			LogLevel: "INFO",
+			Service:  "users",
+			Message: fmt.Sprintf("%s %s %s %d %s %s",
+				c.Request.Method,
+				c.Request.URL.Path,
+				c.Request.Proto,
+				c.Writer.Status(),
+				latency.String(),
+				c.ClientIP(),
+			),
+		}
+		logger.LogError(logEntry)
+		// logger.Info(fmt.Sprintf("%s %s %s %d %s %s",
+		// 	c.Request.Method,
+		// 	c.Request.URL.Path,
+		// 	c.Request.Proto,
+		// 	c.Writer.Status(),
+		// 	latency.String(),
+		// 	c.ClientIP(),
+		// ))
 	}
 }

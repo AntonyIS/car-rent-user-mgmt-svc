@@ -7,6 +7,7 @@ import (
 	"os"
 	"time"
 
+	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
 	"github.com/AntonyIS/notelify-users-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
 	"github.com/golang-jwt/jwt"
@@ -15,10 +16,10 @@ import (
 type middleware struct {
 	svc       ports.UserService
 	secretKey string
-	logger    ports.Logger
+	logger    ports.LoggingService
 }
 
-func NewMiddleware(svc ports.UserService, logger ports.Logger, secretKey string) *middleware {
+func NewMiddleware(svc ports.UserService, logger ports.LoggingService, secretKey string) *middleware {
 	return &middleware{
 		svc:       svc,
 		secretKey: secretKey,
@@ -32,7 +33,12 @@ func (m middleware) GenerateToken(user_id string) (string, error) {
 	claims := token.Claims.(jwt.MapClaims)
 	user, err := m.svc.ReadUserWithId(user_id)
 	if err != nil {
-		m.logger.Error(err.Error())
+		logEntry := domain.LogMessage{
+			LogLevel: "ERROR",
+			Service:  "users",
+			Message:  err.Error(),
+		}
+		m.logger.LogError(logEntry)
 		return "", err
 	}
 
@@ -42,7 +48,15 @@ func (m middleware) GenerateToken(user_id string) (string, error) {
 	tokenString, err := token.SignedString(key)
 
 	if err != nil {
-		m.logger.Error(err.Error())
+		if err != nil {
+			logEntry := domain.LogMessage{
+				LogLevel: "ERROR",
+				Service:  "users",
+				Message:  err.Error(),
+			}
+			m.logger.LogError(logEntry)
+			return "", err
+		}
 		return "", err
 	}
 	return tokenString, nil
@@ -52,14 +66,27 @@ func (m middleware) Authorize(c *gin.Context) {
 	tokenString := c.GetHeader("token")
 	token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
 		if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-			m.logger.Error(fmt.Sprintf("unexpected signing method: %v", token.Header["sub"]))
+			logEntry := domain.LogMessage{
+				LogLevel: "ERROR",
+				Service:  "users",
+				Message:  fmt.Sprintf("unexpected signing method: %v", token.Header["sub"]),
+			}
+			m.logger.LogError(logEntry)
 			return nil, fmt.Errorf("unexpected signing method: %v", token.Header["sub"])
 		}
 		return []byte(os.Getenv("SECRET_KEY")), nil
 	})
 
 	if err != nil {
-		m.logger.Error(err.Error())
+		if err != nil {
+			logEntry := domain.LogMessage{
+				LogLevel: "ERROR",
+				Service:  "users",
+				Message:  err.Error(),
+			}
+			m.logger.LogError(logEntry)
+
+		}
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": err.Error(),
 		})
@@ -73,7 +100,12 @@ func (m middleware) Authorize(c *gin.Context) {
 		}
 		c.Next()
 	} else {
-		m.logger.Error("request not authorized")
+		logEntry := domain.LogMessage{
+			LogLevel: "ERROR",
+			Service:  "users",
+			Message:  "request not authorized",
+		}
+		m.logger.LogError(logEntry)
 		c.AbortWithStatusJSON(http.StatusUnauthorized, gin.H{
 			"error": errors.New("request not authorized"),
 		})
