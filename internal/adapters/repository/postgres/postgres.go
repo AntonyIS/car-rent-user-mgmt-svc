@@ -7,7 +7,7 @@ import (
 	"io/ioutil"
 	"net/http"
 
-	appConfig "github.com/AntonyIS/notelify-users-service/config"
+	"github.com/AntonyIS/notelify-users-service/config"
 	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
 	"github.com/lib/pq"
 	_ "github.com/lib/pq"
@@ -19,9 +19,9 @@ type PostgresDBClient struct {
 	articlesServiceURL string
 }
 
-func NewPostgresClient(appConfig appConfig.Config) (*PostgresDBClient, error) {
+func NewPostgresClient(appConfig config.Config) (*PostgresDBClient, error) {
 	dbname := appConfig.POSTGRES_DB
-	tablename := appConfig.ARTICLE_TABLE
+	tablename := appConfig.USER_TABLE
 	user := appConfig.POSTGRES_USER
 	password := appConfig.POSTGRES_PASSWORD
 	port := appConfig.POSTGRES_PORT

@@ -9,7 +9,7 @@ import (
 type Config struct {
 	ENV                 string
 	SERVER_PORT         string
-	ARTICLE_TABLE       string
+	USER_TABLE          string
 	LOGGER_URL          string
 	SECRET_KEY          string
 	POSTGRES_DB         string
@@ -22,22 +22,14 @@ type Config struct {
 	TEST                bool
 }
 
-var ENV string
-
 func NewConfig() (*Config, error) {
 	ENV := os.Getenv("ENV")
-
-	if ENV == "test" {
-		err := godotenv.Load("../../../.env")
-		if err != nil {
-			return nil, err
-		}
-	} else {
+	switch ENV {
+	case "development":
 		err := godotenv.Load(".env")
 		if err != nil {
 			return nil, err
 		}
-		ENV = os.Getenv("ENV")
 	}
 
 	var (
@@ -47,10 +39,10 @@ func NewConfig() (*Config, error) {
 		POSTGRES_DB         = "postgres"
 		POSTGRES_HOST       = "postgres"
 		POSTGRES_PORT       = "5432"
-		SERVER_PORT         = "8000"
-		ARTICLE_TABLE       = "User"
-		LOGGER_URL          = "http://localhost:8002/v1/logger"
-		ARTICLE_SERVICE_URL = "http://articles"
+		SERVER_PORT         = "8001"
+		USER_TABLE          = "Users"
+		LOGGER_URL          = "http://logger:8002/v1/logger"
+		ARTICLE_SERVICE_URL = "http://articles:8001/v1/articles"
 		DEBUG               = false
 		TEST                = false
 	)
@@ -63,39 +55,43 @@ func NewConfig() (*Config, error) {
 	case "production_test":
 		TEST = true
 		DEBUG = true
-		ARTICLE_TABLE = "TestUser"
-		ARTICLE_SERVICE_URL = "http://articles:8001/v1/articles"
-		LOGGER_URL = "http://logger:8002/v1/logger"
-
-	case "developement_test":
-		TEST = true
-		DEBUG = true
-		ARTICLE_TABLE = "TestUser"
+		USER_TABLE = "PriductionTestUsers"
 
 	case "development":
 		TEST = true
 		DEBUG = true
 		POSTGRES_HOST = "localhost"
-		ARTICLE_TABLE = "DevUser"
+		USER_TABLE = "DevUsers"
+		LOGGER_URL = "http://localhost:8002/v1/logger"
+		ARTICLE_SERVICE_URL = "http://localhost:8001/v1/articles"
+
+	case "development_test":
+		TEST = true
+		DEBUG = true
+		SECRET_KEY = "testsecret"
+		POSTGRES_PASSWORD = "pass1234"
+		POSTGRES_HOST = "localhost"
+		USER_TABLE = "TestUsers"
+		LOGGER_URL = "http://localhost:8002/v1/logger"
+		ARTICLE_SERVICE_URL = "http://localhost:8001/v1/articles"
 
 	case "docker":
 		TEST = true
 		DEBUG = true
-		ARTICLE_TABLE = "DockerUser"
-		ARTICLE_SERVICE_URL = "http://articles:8001/v1/articles"
+		USER_TABLE = "DockerUsers"
 		LOGGER_URL = "http://logger:8002/v1/logger"
 
-		
 	case "docker_test":
 		TEST = true
 		DEBUG = true
-		ARTICLE_TABLE = "DockerUser"
+		USER_TABLE = "DockerUsers"
+		LOGGER_URL = "http://logger:8002/v1/logger"
 	}
 
 	config := Config{
 		ENV:                 ENV,
 		SERVER_PORT:         SERVER_PORT,
-		ARTICLE_TABLE:       ARTICLE_TABLE,
+		USER_TABLE:          USER_TABLE,
 		SECRET_KEY:          SECRET_KEY,
 		LOGGER_URL:          LOGGER_URL,
 		DEBUG:               DEBUG,
