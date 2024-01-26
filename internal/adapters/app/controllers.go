@@ -147,7 +147,7 @@ func (h handler) Login(ctx *gin.Context) {
 		})
 		return
 	}
-	fmt.Println(dbUser)
+
 	if dbUser.CheckPasswordHarsh(user.Password) {
 		middleware := NewMiddleware(h.svc, h.logger, h.secretKey)
 		tokenString, err := middleware.GenerateToken(dbUser.UserId)
