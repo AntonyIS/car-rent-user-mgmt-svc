@@ -1,7 +1,6 @@
 package app
 
 import (
-	"fmt"
 	"net/http"
 
 	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
