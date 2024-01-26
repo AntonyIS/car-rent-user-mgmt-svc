@@ -1,6 +1,7 @@
 package app
 
 import (
+	"fmt"
 	"net/http"
 
 	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
@@ -17,6 +18,7 @@ type GinHandler interface {
 	DeleteAllUsers(ctx *gin.Context)
 	Login(ctx *gin.Context)
 	Logout(ctx *gin.Context)
+	HealthCheck(ctx *gin.Context)
 }
 
 type handler struct {
@@ -129,6 +131,7 @@ func (h handler) DeleteUser(ctx *gin.Context) {
 }
 
 func (h handler) Login(ctx *gin.Context) {
+
 	var user domain.User
 	if err := ctx.ShouldBind(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -137,13 +140,14 @@ func (h handler) Login(ctx *gin.Context) {
 		return
 	}
 	dbUser, err := h.svc.ReadUserWithEmail(user.Email)
+
 	if err != nil {
 		ctx.JSON(http.StatusNotFound, gin.H{
 			"error": err.Error(),
 		})
 		return
 	}
-
+	fmt.Println(dbUser)
 	if dbUser.CheckPasswordHarsh(user.Password) {
 		middleware := NewMiddleware(h.svc, h.logger, h.secretKey)
 		tokenString, err := middleware.GenerateToken(dbUser.UserId)
@@ -199,5 +203,12 @@ func (h handler) DeleteAllUsers(ctx *gin.Context) {
 
 	ctx.JSON(http.StatusOK, gin.H{
 		"message": message,
+	})
+}
+
+func (h handler) HealthCheck(ctx *gin.Context) {
+	ctx.JSON(http.StatusOK, gin.H{
+		"status":  "success",
+		"message": "Server running",
 	})
 }

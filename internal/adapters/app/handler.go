@@ -33,8 +33,9 @@ func InitGinRoutes(svc ports.UserService, logger ports.LoggingService, conf conf
 	// middleware := NewMiddleware(svc, logger, conf.SECRET_KEY)
 
 	// usersRoutes.Use(middleware.Authorize)
-
+	// fmt.Println("middleware")
 	{
+
 		usersRoutes.GET("/", handler.ReadUsers)
 		usersRoutes.GET("/:user_id", handler.ReadUser)
 		usersRoutes.PUT("/:user_id", handler.UpdateUser)
@@ -43,6 +44,7 @@ func InitGinRoutes(svc ports.UserService, logger ports.LoggingService, conf conf
 		usersRoutes.POST("/", handler.CreateUser)
 		usersRoutes.POST("/login", handler.Login)
 		usersRoutes.POST("/logout", handler.Logout)
+		usersRoutes.GET("/healthcheck", handler.HealthCheck)
 	}
 
 	logEntry := domain.LogMessage{

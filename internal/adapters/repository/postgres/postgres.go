@@ -87,12 +87,12 @@ func (psql *PostgresDBClient) ReadUserWithId(user_id string) (*domain.User, erro
 		return nil, err
 	}
 	articleSvcURL := fmt.Sprintf("%s/author/%s", psql.articlesServiceURL, user_id)
-	var contents []domain.Article
-	contents, err = getUserArticles(articleSvcURL)
+	var articles []domain.Article
+	articles, err = getUserArticles(articleSvcURL)
 	if err != nil {
 		return nil, err
 	}
-	user.Articles = contents
+	user.Articles = articles
 	return &user, nil
 }
 
@@ -118,11 +118,12 @@ func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
 
 func (psql *PostgresDBClient) ReadUserWithEmail(email string) (*domain.User, error) {
 	var user domain.User
-	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,contents,profile_image,following,followers FROM %s WHERE email=$1`, psql.tablename)
-	err := psql.db.QueryRow(queryString, email).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, &user.Articles, &user.ProfileImage, &user.Following, &user.Followers)
+	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers FROM %s WHERE email=$1`, psql.tablename)
+	err := psql.db.QueryRow(queryString, email).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, pq.Array(&user.Articles), &user.ProfileImage, &user.Following, &user.Followers)
 	if err != nil {
 		return nil, err
 	}
+	
 	return &user, nil
 }
 
@@ -132,7 +133,7 @@ func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error
 		lastname = $3,
 		handle = $4,
 		about = $5,
-		contents = $6,
+		articles = $6,
 		profile_image = $7,
 		following = $8,
 		followers = $9

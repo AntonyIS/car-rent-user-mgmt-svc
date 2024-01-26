@@ -15,15 +15,16 @@ import (
 
 type middleware struct {
 	svc       ports.UserService
-	secretKey string
 	logger    ports.LoggingService
+	secretKey string
 }
 
 func NewMiddleware(svc ports.UserService, logger ports.LoggingService, secretKey string) *middleware {
+
 	return &middleware{
 		svc:       svc,
-		secretKey: secretKey,
 		logger:    logger,
+		secretKey: secretKey,
 	}
 }
 
