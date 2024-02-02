@@ -244,7 +244,7 @@ func (h handler) GithubCallback(ctx *gin.Context) {
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to exchange code for token"})
 		return
 	}
-	// Use the token to fetch user details
+	
 
 	user, err := getUserDetails(token.AccessToken)
 	if err != nil {

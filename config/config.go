@@ -46,7 +46,7 @@ func NewConfig() (*Config, error) {
 		SERVER_PORT          = "8000"
 		USER_TABLE           = "Users"
 		LOGGER_URL           = "http://logger:8002/logger/v1/users"
-		ARTICLE_SERVICE_URL  = "http://articles:8001/articles/v1"
+		ARTICLE_SERVICE_URL  = "http://articles:8001/posts/v1"
 		DEBUG                = false
 		TEST                 = false
 	)
@@ -67,7 +67,7 @@ func NewConfig() (*Config, error) {
 		POSTGRES_HOST = "localhost"
 		USER_TABLE = "DevUsers"
 		LOGGER_URL = "http://localhost:8002/logger/v1/users"
-		ARTICLE_SERVICE_URL = "http://localhost:8001/articles/v1"
+		ARTICLE_SERVICE_URL = "http://localhost:8001/posts/v1"
 
 	case "development_test":
 		TEST = true
@@ -77,7 +77,7 @@ func NewConfig() (*Config, error) {
 		POSTGRES_HOST = "localhost"
 		USER_TABLE = "TestUsers"
 		LOGGER_URL = "http://localhost:8002/logger/v1/users"
-		ARTICLE_SERVICE_URL = "http://localhost:8001/articles/v1"
+		ARTICLE_SERVICE_URL = "http://localhost:8001/posts/v1"
 
 	case "docker":
 		TEST = true

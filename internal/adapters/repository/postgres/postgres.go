@@ -88,10 +88,10 @@ func (psql *PostgresDBClient) ReadUserWithId(user_id string) (*domain.User, erro
 	}
 	articleSvcURL := fmt.Sprintf("%s/author/%s", psql.articlesServiceURL, user_id)
 	var articles []domain.Article
-	articles, err = getUserArticles(articleSvcURL)
-	if err != nil {
-		return nil, err
-	}
+	articles, _ = getUserArticles(articleSvcURL)
+	// if err != nil {
+	// 	return nil, err
+	// }
 	user.Articles = articles
 	return &user, nil
 }
@@ -123,7 +123,7 @@ func (psql *PostgresDBClient) ReadUserWithEmail(email string) (*domain.User, err
 	if err != nil {
 		return nil, err
 	}
-	
+
 	return &user, nil
 }
 
@@ -193,14 +193,14 @@ func migrateDB(db *sql.DB, userTable string) error {
 func getUserArticles(url string) ([]domain.Article, error) {
 	response, err := http.Get(url)
 	if err != nil {
-		return nil, err
+		return []domain.Article{}, err
 	}
 	defer response.Body.Close()
 
 	body, err := ioutil.ReadAll(response.Body)
 
 	if err != nil {
-		return nil, err
+		return []domain.Article{}, err
 	}
 
 	res := string(body)
@@ -209,7 +209,7 @@ func getUserArticles(url string) ([]domain.Article, error) {
 
 	err = json.Unmarshal([]byte(res), &articles)
 	if err != nil {
-		return nil, err
+		return []domain.Article{}, err
 	}
 
 	return articles, nil
