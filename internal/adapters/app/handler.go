@@ -26,9 +26,9 @@ func InitGinRoutes(svc ports.UserService, logger ports.LoggingService, conf conf
 		AllowCredentials: true,
 	}))
 
-	handler := NewGinHandler(svc, logger, conf.SECRET_KEY)
+	handler := NewGinHandler(svc, logger, conf)
 
-	usersRoutes := router.Group("/v1/users")
+	usersRoutes := router.Group("/users/v1")
 
 	// middleware := NewMiddleware(svc, logger, conf.SECRET_KEY)
 
@@ -42,7 +42,8 @@ func InitGinRoutes(svc ports.UserService, logger ports.LoggingService, conf conf
 		usersRoutes.DELETE("/:user_id", handler.DeleteUser)
 		usersRoutes.DELETE("/", handler.DeleteAllUsers)
 		usersRoutes.POST("/", handler.CreateUser)
-		usersRoutes.POST("/login", handler.Login)
+		usersRoutes.GET("/github/login", handler.GithubLogin)
+		usersRoutes.POST("/github/login/callback", handler.GithubCallback)
 		usersRoutes.POST("/logout", handler.Logout)
 		usersRoutes.GET("/healthcheck", handler.HealthCheck)
 	}

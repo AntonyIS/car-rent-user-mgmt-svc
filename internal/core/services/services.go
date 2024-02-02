@@ -32,8 +32,14 @@ func NewUserManagementService(repo ports.UserRepository, logger ports.LoggingSer
 
 func (svc *UserManagementService) CreateUser(user *domain.User) (*domain.User, error) {
 	// Assign new user with a unique id
-	user.UserId = uuid.New().String()
+	if user.UserId == "" {
+		user.UserId = uuid.New().String()
+	}
+
 	// hash user password
+	if user.Password == "" {
+		user.Password = "pass"
+	}
 	hashedPassword, err := bcrypt.GenerateFromPassword([]byte(user.Password), bcrypt.DefaultCost)
 	if err != nil {
 		if err != nil {
@@ -56,7 +62,6 @@ func (svc *UserManagementService) CreateUser(user *domain.User) (*domain.User, e
 	}
 	svc.logger.LogInfo(logEntry)
 	return svc.repo.CreateUser(user)
-
 }
 
 func (svc *UserManagementService) ReadUserWithId(user_id string) (*domain.User, error) {

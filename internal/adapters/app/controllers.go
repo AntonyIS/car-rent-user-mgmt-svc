@@ -1,11 +1,16 @@
 package app
 
 import (
+	"context"
+	"encoding/json"
+	"fmt"
 	"net/http"
 
+	"github.com/AntonyIS/notelify-users-service/config"
 	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
 	"github.com/AntonyIS/notelify-users-service/internal/core/ports"
 	"github.com/gin-gonic/gin"
+	"golang.org/x/oauth2"
 )
 
 type GinHandler interface {
@@ -16,20 +21,35 @@ type GinHandler interface {
 	DeleteUser(ctx *gin.Context)
 	DeleteAllUsers(ctx *gin.Context)
 	Login(ctx *gin.Context)
+	GithubLogin(ctx *gin.Context)
+	GithubCallback(ctx *gin.Context)
 	Logout(ctx *gin.Context)
 	HealthCheck(ctx *gin.Context)
 }
 
 type handler struct {
-	svc       ports.UserService
-	secretKey string
-	logger    ports.LoggingService
+	svc         ports.UserService
+	conf        config.Config
+	logger      ports.LoggingService
+	githubOauth *oauth2.Config
 }
 
-func NewGinHandler(svc ports.UserService, logger ports.LoggingService, secretKey string) GinHandler {
+func NewGinHandler(svc ports.UserService, logger ports.LoggingService, conf config.Config) GinHandler {
+	oauthConfig := &oauth2.Config{
+		ClientID:     conf.GITHUB_CLIENT_ID,
+		ClientSecret: conf.GITHUB_CLIENT_SECRET,
+		RedirectURL:  "http://localhost:3000",
+		Scopes:       []string{"user"},
+		Endpoint: oauth2.Endpoint{
+			AuthURL:  "https://github.com/login/oauth/authorize",
+			TokenURL: "https://github.com/login/oauth/access_token",
+		},
+	}
 	routerHandler := handler{
-		svc:       svc,
-		secretKey: secretKey,
+		svc:         svc,
+		conf:        conf,
+		logger:      logger,
+		githubOauth: oauthConfig,
 	}
 
 	return routerHandler
@@ -130,7 +150,6 @@ func (h handler) DeleteUser(ctx *gin.Context) {
 }
 
 func (h handler) Login(ctx *gin.Context) {
-
 	var user domain.User
 	if err := ctx.ShouldBind(&user); err != nil {
 		ctx.JSON(http.StatusBadRequest, gin.H{
@@ -148,7 +167,7 @@ func (h handler) Login(ctx *gin.Context) {
 	}
 
 	if dbUser.CheckPasswordHarsh(user.Password) {
-		middleware := NewMiddleware(h.svc, h.logger, h.secretKey)
+		middleware := NewMiddleware(h.svc, h.logger, h.conf.SECRET_KEY)
 		tokenString, err := middleware.GenerateToken(dbUser.UserId)
 
 		if err != nil {
@@ -205,9 +224,93 @@ func (h handler) DeleteAllUsers(ctx *gin.Context) {
 	})
 }
 
+func (h handler) GithubLogin(ctx *gin.Context) {
+	url := h.githubOauth.AuthCodeURL("state")
+	ctx.Redirect(http.StatusTemporaryRedirect, url)
+}
+
+func (h handler) GithubCallback(ctx *gin.Context) {
+	var request struct {
+		Code string `json:"code"`
+	}
+
+	if err := ctx.BindJSON(&request); err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
+		return
+	}
+	token, err := h.githubOauth.Exchange(context.Background(), request.Code)
+
+	if err != nil {
+		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to exchange code for token"})
+		return
+	}
+	// Use the token to fetch user details
+
+	user, err := getUserDetails(token.AccessToken)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user details"})
+		return
+	}
+
+	dbUser, err := h.svc.ReadUserWithId(user.UserId)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user details"})
+		return
+	}
+
+	if dbUser != nil {
+		dbUser.AccessToken = token.AccessToken
+		ctx.JSON(http.StatusOK, dbUser)
+		return
+	}
+
+	user, err = h.svc.CreateUser(user)
+	if err != nil {
+		ctx.JSON(http.StatusInternalServerError, gin.H{
+			"error": err.Error(),
+		})
+		return
+	}
+
+	ctx.JSON(http.StatusCreated, user)
+	return
+}
+
 func (h handler) HealthCheck(ctx *gin.Context) {
 	ctx.JSON(http.StatusOK, gin.H{
 		"status":  "success",
 		"message": "Server running",
 	})
+}
+
+func getUserDetails(accessToken string) (*domain.User, error) {
+	// GitHub API endpoint for authenticated user details
+	apiURL := "https://api.github.com/user"
+
+	// Create a new HTTP request
+	req, err := http.NewRequest("GET", apiURL, nil)
+	if err != nil {
+		return nil, err
+	}
+
+	// Set the Authorization header with the OAuth token
+	req.Header.Set("Authorization", fmt.Sprintf("Bearer %s", accessToken))
+
+	// Make the HTTP request
+	client := &http.Client{}
+	resp, err := client.Do(req)
+	if err != nil {
+		return nil, err
+	}
+	defer resp.Body.Close()
+
+	// Read the response body
+	var githubUser domain.GithubUser
+	decoder := json.NewDecoder(resp.Body)
+	if err := decoder.Decode(&githubUser); err != nil {
+		return nil, err
+	}
+	githubUser.AccessToken = accessToken
+	user := githubUser.InitGithubUser()
+	return user, nil
 }
