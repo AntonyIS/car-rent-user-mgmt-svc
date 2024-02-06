@@ -33,9 +33,9 @@ func InitGinRoutes(svc ports.UserService, logger ports.LoggingService, conf conf
 	// middleware := NewMiddleware(svc, logger, conf.SECRET_KEY)
 
 	// usersRoutes.Use(middleware.Authorize)
-	// fmt.Println("middleware")
-	{
 
+	{
+		usersRoutes.GET("/healthcheck", handler.HealthCheck)
 		usersRoutes.GET("/", handler.ReadUsers)
 		usersRoutes.GET("/:user_id", handler.ReadUser)
 		usersRoutes.PUT("/:user_id", handler.UpdateUser)
@@ -45,7 +45,7 @@ func InitGinRoutes(svc ports.UserService, logger ports.LoggingService, conf conf
 		usersRoutes.GET("/github/login", handler.GithubLogin)
 		usersRoutes.POST("/github/login/callback", handler.GithubCallback)
 		usersRoutes.POST("/logout", handler.Logout)
-		usersRoutes.GET("/healthcheck", handler.HealthCheck)
+
 	}
 
 	logEntry := domain.LogMessage{

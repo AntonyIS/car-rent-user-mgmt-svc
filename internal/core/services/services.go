@@ -121,6 +121,7 @@ func (svc *UserManagementService) ReadUsers() ([]domain.User, error) {
 		Service:  "users",
 		Message:  "Users found successfuly",
 	}
+	fmt.Println("Users", users)
 	svc.logger.LogInfo(logEntry)
 	return users, nil
 }

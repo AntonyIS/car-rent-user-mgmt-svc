@@ -16,9 +16,3 @@ docker-run:
 
 docker-test:
 	ENV=docker_test go test -v ./...
-
-
-
-
-
-# dckr_pat_fVXnE212TTsa1qDzzyWXCmuSekQ

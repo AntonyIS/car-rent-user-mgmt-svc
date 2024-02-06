@@ -59,7 +59,7 @@ func NewConfig() (*Config, error) {
 	case "production_test":
 		TEST = true
 		DEBUG = true
-		USER_TABLE = "PriductionTestUsers"
+		USER_TABLE = "ProductionTestUsers"
 
 	case "development":
 		TEST = true

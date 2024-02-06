@@ -29,3 +29,4 @@ type LoggingService interface {
 	LogWarning(LogEntry domain.LogMessage)
 	LogError(LogEntry domain.LogMessage)
 }
+
