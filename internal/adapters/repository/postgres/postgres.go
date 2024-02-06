@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"time"
 
 	"github.com/AntonyIS/notelify-users-service/config"
 	"github.com/AntonyIS/notelify-users-service/internal/core/domain"
@@ -30,13 +31,14 @@ func NewPostgresClient(appConfig config.Config) (*PostgresDBClient, error) {
 
 	dsn := fmt.Sprintf("host=%s port=%s user=%s dbname=%s password=%s sslmode=disable", host, port, user, dbname, password)
 
-	db, err := sql.Open("postgres", dsn)
+	connectionAttemps := 1
+	db, err := dbConnectionAttempts(dsn, connectionAttemps)
 
 	if err != nil {
 		return nil, err
 	}
 
-	err = db.Ping()
+	err = dbPingAttempts(db, connectionAttemps)
 
 	if err != nil {
 		return nil, err
@@ -213,4 +215,36 @@ func getUserArticles(url string) ([]domain.Article, error) {
 	}
 
 	return articles, nil
+}
+
+func dbConnectionAttempts(dsn string, connectionAttemps int) (*sql.DB, error) {
+	db, err := sql.Open("postgres", dsn)
+	if err != nil {
+		if connectionAttemps <= 3 {
+			fmt.Println("Sleeping for 5 seconds on count ", connectionAttemps)
+			time.Sleep(5 * time.Second)
+			connectionAttemps += 1
+			dbConnectionAttempts(dsn, connectionAttemps)
+		} else {
+			return nil, err
+		}
+	}
+
+	return db, nil
+}
+
+func dbPingAttempts(db *sql.DB, connectionAttemps int) error {
+	err := db.Ping()
+	if err != nil {
+		if connectionAttemps <= 3 {
+			fmt.Println("DB Ping attept :", connectionAttemps)
+			time.Sleep(5 * time.Second)
+			connectionAttemps += 1
+			dbPingAttempts(db, connectionAttemps)
+		} else {
+			return err
+		}
+	}
+
+	return nil
 }
