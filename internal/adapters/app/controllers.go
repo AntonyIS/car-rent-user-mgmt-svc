@@ -38,7 +38,7 @@ func NewGinHandler(svc ports.UserService, logger ports.LoggingService, conf conf
 	oauthConfig := &oauth2.Config{
 		ClientID:     conf.GITHUB_CLIENT_ID,
 		ClientSecret: conf.GITHUB_CLIENT_SECRET,
-		RedirectURL:  "http://localhost:3000",
+		RedirectURL:  conf.GITHUB_REDIRECT_URL,
 		Scopes:       []string{"user"},
 		Endpoint: oauth2.Endpoint{
 			AuthURL:  "https://github.com/login/oauth/authorize",
@@ -56,17 +56,9 @@ func NewGinHandler(svc ports.UserService, logger ports.LoggingService, conf conf
 }
 
 func (h handler) CreateUser(ctx *gin.Context) {
-	res := domain.User{
-		About:        "",
-		Handle:       "",
-		ProfileImage: "",
-		Following:    0,
-		Followers:    0,
-		Articles:     []domain.Article{},
-	}
+	var res domain.User
 	if err := ctx.ShouldBindJSON(&res); err != nil {
-
-		ctx.JSON(http.StatusBadRequest, gin.H{
+		ctx.JSON(http.StatusCreated, gin.H{
 			"error": err.Error(),
 		})
 		return
@@ -74,7 +66,6 @@ func (h handler) CreateUser(ctx *gin.Context) {
 
 	user, err := h.svc.CreateUser(&res)
 	if err != nil {
-
 		ctx.JSON(http.StatusInternalServerError, gin.H{
 			"error": err.Error(),
 		})
@@ -235,45 +226,48 @@ func (h handler) GithubCallback(ctx *gin.Context) {
 	}
 
 	if err := ctx.BindJSON(&request); err != nil {
+		fmt.Println("ERROR 1!", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Invalid request"})
 		return
 	}
 	token, err := h.githubOauth.Exchange(context.Background(), request.Code)
 
 	if err != nil {
+		fmt.Println("ERROR 2!", err)
 		ctx.JSON(http.StatusBadRequest, gin.H{"error": "Failed to exchange code for token"})
 		return
 	}
-	
 
 	user, err := getUserDetails(token.AccessToken)
 	if err != nil {
+		fmt.Println("ERROR 3!", err)
 		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user details"})
 		return
 	}
 
-	dbUser, err := h.svc.ReadUserWithId(user.UserId)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{"error": "Failed to fetch user details"})
+	if user.GitHubId != "" {
+		dbUser, err := h.svc.ReadUserWithGithubId(user.GitHubId)
+		if err != nil {
+			if err.Error() == "sql: no rows in result set" {
+				newUser, err := h.svc.CreateUser(user)
+				if err != nil {
+					ctx.JSON(http.StatusInternalServerError, gin.H{
+						"error": err.Error(),
+					})
+					return
+				}
+				ctx.JSON(http.StatusOK, newUser)
+				return
+			}
+			ctx.JSON(http.StatusInternalServerError, gin.H{
+				"error": err.Error(),
+			})
+			return
+		}
+
+		ctx.JSON(http.StatusCreated, dbUser)
 		return
 	}
-
-	if dbUser != nil {
-		dbUser.AccessToken = token.AccessToken
-		ctx.JSON(http.StatusOK, dbUser)
-		return
-	}
-
-	user, err = h.svc.CreateUser(user)
-	if err != nil {
-		ctx.JSON(http.StatusInternalServerError, gin.H{
-			"error": err.Error(),
-		})
-		return
-	}
-
-	ctx.JSON(http.StatusCreated, user)
-	return
 }
 
 func (h handler) HealthCheck(ctx *gin.Context) {
@@ -312,5 +306,5 @@ func getUserDetails(accessToken string) (*domain.User, error) {
 	}
 	githubUser.AccessToken = accessToken
 	user := githubUser.InitGithubUser()
-	return user, nil
+	return &user, nil
 }

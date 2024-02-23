@@ -53,15 +53,33 @@ func NewPostgresClient(appConfig config.Config) (*PostgresDBClient, error) {
 }
 
 func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error) {
+
 	query := fmt.Sprintf(
 		`INSERT INTO %s 
-			(user_id,firstname,lastname,email,password,handle,about,articles,profile_image,following,followers) 
-			VALUES 
-			($1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11)`,
+			(
+				user_id,
+				github_id,
+				linkedin_id,
+				firstname,
+				lastname,
+				email,
+				password,
+				handle,
+				about,
+				articles,
+				profile_image,
+				following,
+				followers, 
+				accessToken
+			) 
+		VALUES 
+			($1,$2,$3,$4,$5,$6,$7,$8,$9,$10,$11,$12,$13,$14)`,
 		psql.tablename)
 	_, err := psql.db.Exec(
 		query,
 		user.UserId,
+		user.GitHubId,
+		user.LinkedInId,
 		user.Firstname,
 		user.Lastname,
 		user.Email,
@@ -70,8 +88,9 @@ func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error
 		user.About,
 		pq.Array(user.Articles),
 		user.ProfileImage,
-		user.Following,
-		user.Followers,
+		pq.Array(user.Following),
+		pq.Array(user.Followers),
+		user.AccessToken,
 	)
 
 	if err != nil {
@@ -83,23 +102,147 @@ func (psql *PostgresDBClient) CreateUser(user *domain.User) (*domain.User, error
 
 func (psql *PostgresDBClient) ReadUserWithId(user_id string) (*domain.User, error) {
 	var user domain.User
-	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers FROM %s WHERE user_id=$1`, psql.tablename)
-	err := psql.db.QueryRow(queryString, user_id).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, pq.Array(&user.Articles), &user.ProfileImage, &user.Following, &user.Followers)
+	queryString := fmt.Sprintf(`
+		SELECT 
+			user_id,
+			github_id,
+			linkedin_id,
+			firstname,
+			lastname,
+			email,
+			handle,
+			about,
+			articles,
+			profile_image,
+			following,
+			followers,
+			accessToken 
+		FROM %s 
+		WHERE 
+			user_id=$1`, psql.tablename)
+	err := psql.db.QueryRow(
+		queryString,
+		user_id).Scan(
+		&user.UserId,
+		&user.GitHubId,
+		&user.LinkedInId,
+		&user.Firstname,
+		&user.Lastname,
+		&user.Email,
+		&user.Handle,
+		&user.About,
+		pq.Array(&user.Articles),
+		&user.ProfileImage,
+		pq.Array(&user.Following),
+		pq.Array(&user.Followers),
+		&user.AccessToken,
+	)
 	if err != nil {
 		return nil, err
 	}
 	articleSvcURL := fmt.Sprintf("%s/author/%s", psql.articlesServiceURL, user_id)
 	var articles []domain.Article
 	articles, _ = getUserArticles(articleSvcURL)
-	// if err != nil {
-	// 	return nil, err
-	// }
+	user.Articles = articles
+	return &user, nil
+}
+
+func (psql *PostgresDBClient) ReadUserWithGithubId(github_id string) (*domain.User, error) {
+	var user domain.User
+	queryString := fmt.Sprintf(`
+		SELECT 
+			user_id,
+			github_id,
+			linkedin_id,
+			firstname,
+			lastname,
+			email,
+			handle,
+			about,
+			articles,
+			profile_image,
+			following,
+			followers,
+			accessToken 
+		FROM %s 
+		WHERE 
+			github_id=$1`, psql.tablename)
+	err := psql.db.QueryRow(
+		queryString,
+		github_id).Scan(
+		&user.UserId,
+		&user.GitHubId,
+		&user.LinkedInId,
+		&user.Firstname,
+		&user.Lastname,
+		&user.Email,
+		&user.Handle,
+		&user.About,
+		pq.Array(&user.Articles),
+		&user.ProfileImage,
+		pq.Array(&user.Following),
+		pq.Array(&user.Followers),
+		&user.AccessToken,
+	)
+	if err != nil {
+		return nil, err
+	}
+	articleSvcURL := fmt.Sprintf("%s/author/%s", psql.articlesServiceURL, github_id)
+	var articles []domain.Article
+	articles, _ = getUserArticles(articleSvcURL)
+	user.Articles = articles
+	return &user, nil
+}
+
+func (psql *PostgresDBClient) ReadUserWithLinkedinId(linkedin_id string) (*domain.User, error) {
+	var user domain.User
+	queryString := fmt.Sprintf(`
+		SELECT 
+			user_id,
+			github_id,
+			linkedin_id,
+			firstname,
+			lastname,
+			email,
+			handle,
+			about,
+			articles,
+			profile_image,
+			following,
+			followers,
+			accessToken 
+		FROM %s 
+		WHERE 
+		linkedin_id=$1`, psql.tablename)
+	err := psql.db.QueryRow(
+		queryString,
+		linkedin_id).Scan(
+		&user.UserId,
+		&user.GitHubId,
+		&user.LinkedInId,
+		&user.Firstname,
+		&user.Lastname,
+		&user.Email,
+		&user.Handle,
+		&user.About,
+		pq.Array(&user.Articles),
+		&user.ProfileImage,
+		pq.Array(&user.Following),
+		pq.Array(&user.Followers),
+		&user.AccessToken,
+	)
+	if err != nil {
+		return nil, err
+	}
+	articleSvcURL := fmt.Sprintf("%s/author/%s", psql.articlesServiceURL, linkedin_id)
+	var articles []domain.Article
+	articles, _ = getUserArticles(articleSvcURL)
 	user.Articles = articles
 	return &user, nil
 }
 
 func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
-	rows, err := psql.db.Query(fmt.Sprintf("SELECT user_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers FROM %s", psql.tablename))
+	rows, err := psql.db.Query(fmt.Sprintf("SELECT user_id,github_id,linkedin_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers, accessToken FROM %s", psql.tablename))
 	if err != nil {
 		return nil, err
 	}
@@ -109,7 +252,21 @@ func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
 	for rows.Next() {
 		var user domain.User
 
-		if err := rows.Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, pq.Array(&user.Articles), &user.ProfileImage, &user.Following, &user.Followers); err != nil {
+		if err := rows.Scan(
+			&user.UserId,
+			&user.GitHubId,
+			&user.LinkedInId,
+			&user.Firstname,
+			&user.Lastname,
+			&user.Email,
+			&user.Handle,
+			&user.About,
+			pq.Array(&user.Articles),
+			&user.ProfileImage,
+			pq.Array(&user.Following),
+			pq.Array(&user.Followers),
+			&user.AccessToken,
+		); err != nil {
 
 			return nil, err
 		}
@@ -120,8 +277,8 @@ func (psql *PostgresDBClient) ReadUsers() ([]domain.User, error) {
 
 func (psql *PostgresDBClient) ReadUserWithEmail(email string) (*domain.User, error) {
 	var user domain.User
-	queryString := fmt.Sprintf(`SELECT user_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers FROM %s WHERE email=$1`, psql.tablename)
-	err := psql.db.QueryRow(queryString, email).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, pq.Array(&user.Articles), &user.ProfileImage, &user.Following, &user.Followers)
+	queryString := fmt.Sprintf(`SELECT user_id,github_id,linkedin_id,firstname,lastname,email,handle,about,articles,profile_image,following,followers, accessToken FROM %s WHERE email=$1`, psql.tablename)
+	err := psql.db.QueryRow(queryString, email).Scan(&user.UserId, &user.Firstname, &user.Lastname, &user.Email, &user.Handle, &user.About, pq.Array(&user.Articles), &user.ProfileImage, &user.Following, &user.Followers, &user.AccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -130,7 +287,8 @@ func (psql *PostgresDBClient) ReadUserWithEmail(email string) (*domain.User, err
 }
 
 func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error) {
-	queryString := fmt.Sprintf(`UPDATE %s SET 
+	queryString := fmt.Sprintf(`
+	UPDATE %s SET 
 		firstname = $2,
 		lastname = $3,
 		handle = $4,
@@ -138,10 +296,11 @@ func (psql *PostgresDBClient) UpdateUser(user *domain.User) (*domain.User, error
 		articles = $6,
 		profile_image = $7,
 		following = $8,
-		followers = $9
+		followers = $9,
+		accessToken = $10,
 	`, psql.tablename)
 
-	_, err := psql.db.Exec(queryString, user.Firstname, user.Lastname, user.Handle, user.About, user.Articles, user.ProfileImage, user.Following, user.Followers)
+	_, err := psql.db.Exec(queryString, user.Firstname, user.Lastname, user.Handle, user.About, user.Articles, user.ProfileImage, user.Following, user.Followers, user.AccessToken)
 	if err != nil {
 		return nil, err
 	}
@@ -169,17 +328,20 @@ func (psql *PostgresDBClient) DeleteAllUsers() (string, error) {
 func migrateDB(db *sql.DB, userTable string) error {
 	queryString := fmt.Sprintf(`
 		CREATE TABLE IF NOT EXISTS %s (
-			user_id VARCHAR(255) PRIMARY KEY UNIQUE,
+			user_id VARCHAR(255) NOT NULL PRIMARY KEY UNIQUE,
+			github_id VARCHAR(255)  UNIQUE,
+			linkedin_id VARCHAR(255)  UNIQUE,
 			firstname VARCHAR(255) NOT NULL,
 			lastname VARCHAR(255) NOT NULL,
-			email VARCHAR(255) UNIQUE NOT NULL,
+			email VARCHAR(255) UNIQUE,
 			password VARCHAR(255) UNIQUE NOT NULL,
 			handle VARCHAR(255),
 			about TEXT,
 			articles TEXT [],
 			profile_image varchar(255),
-			Following int,
-			Followers int
+			following TEXT [],
+			followers TEXT [],
+			accessToken  VARCHAR(255)
 	)
 	`, userTable)
 

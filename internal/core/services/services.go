@@ -32,9 +32,8 @@ func NewUserManagementService(repo ports.UserRepository, logger ports.LoggingSer
 
 func (svc *UserManagementService) CreateUser(user *domain.User) (*domain.User, error) {
 	// Assign new user with a unique id
-	if user.UserId == "" {
-		user.UserId = uuid.New().String()
-	}
+
+	user.UserId = uuid.New().String()
 
 	// hash user password
 	if user.Password == "" {
@@ -61,11 +60,52 @@ func (svc *UserManagementService) CreateUser(user *domain.User) (*domain.User, e
 		Message:  fmt.Sprintf("User with ID [%s] created successfuly", user.UserId),
 	}
 	svc.logger.LogInfo(logEntry)
+	
 	return svc.repo.CreateUser(user)
 }
 
 func (svc *UserManagementService) ReadUserWithId(user_id string) (*domain.User, error) {
 	user, err := svc.repo.ReadUserWithId(user_id)
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "ERROR",
+			Service:  "users",
+			Message:  err.Error(),
+		}
+		svc.logger.LogError(logEntry)
+		return nil, err
+	}
+	logEntry := domain.LogMessage{
+		LogLevel: "INFO",
+		Service:  "users",
+		Message:  fmt.Sprintf("User with ID [%s] created successfuly", user.UserId),
+	}
+	svc.logger.LogInfo(logEntry)
+	return user, nil
+}
+
+func (svc *UserManagementService) ReadUserWithGithubId(user_id string) (*domain.User, error) {
+	user, err := svc.repo.ReadUserWithGithubId(user_id)
+	if err != nil {
+		logEntry := domain.LogMessage{
+			LogLevel: "ERROR",
+			Service:  "users",
+			Message:  err.Error(),
+		}
+		svc.logger.LogError(logEntry)
+		return nil, err
+	}
+	logEntry := domain.LogMessage{
+		LogLevel: "INFO",
+		Service:  "users",
+		Message:  fmt.Sprintf("User with ID [%s] created successfuly", user.UserId),
+	}
+	svc.logger.LogInfo(logEntry)
+	return user, nil
+}
+
+func (svc *UserManagementService) ReadUserWithLinkedinId(user_id string) (*domain.User, error) {
+	user, err := svc.repo.ReadUserWithLinkedinId(user_id)
 	if err != nil {
 		logEntry := domain.LogMessage{
 			LogLevel: "ERROR",
@@ -121,7 +161,7 @@ func (svc *UserManagementService) ReadUsers() ([]domain.User, error) {
 		Service:  "users",
 		Message:  "Users found successfuly",
 	}
-	fmt.Println("Users", users)
+
 	svc.logger.LogInfo(logEntry)
 	return users, nil
 }
